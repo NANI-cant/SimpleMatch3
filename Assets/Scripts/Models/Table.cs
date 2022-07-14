@@ -1,17 +1,21 @@
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
-using System.Linq;
 
 namespace TableLogic {
-    [System.Serializable]
     public class Table {
+        public event Action<Match> MatchFound;
+        public event Action<Cell, Cell> CellsChanged;
+
         private Cell[,] _cellsTable;
         private Vector2Int _size;
+        private Cell _selectedCell;
 
         public Vector2Int Size => _size;
 
         public void Generate(Vector2Int size) {
-            _size = new Vector2Int(Mathf.Max(0, Mathf.Abs(size.x)), Mathf.Max(0, Mathf.Abs(size.y)));
+            _size = new Vector2Int(Mathf.Abs(size.x), Mathf.Abs(size.y));
 
             _cellsTable = new Cell[_size.y, _size.x];
 
@@ -20,88 +24,136 @@ namespace TableLogic {
                     _cellsTable[y, x] = new Cell(this, new Vector2Int(x, y));
                 }
             }
+
+            RemoveMatches();
+        }
+
+        public bool TryChooseCell(Cell cell) {
+            if (_selectedCell == null) {
+                _selectedCell = cell;
+                return true;
+            }
+
+            float cellsDistance = Vector2Int.Distance(cell.Position, _selectedCell.Position);
+            if (cellsDistance > 1) {
+                _selectedCell.UnChoose();
+                _selectedCell = cell;
+                return true;
+            }
+            else {
+                Change(_selectedCell, cell);
+                return false;
+            }
+        }
+
+        public void UnChooseCell(Cell cell) {
+            if (_selectedCell == cell) {
+                _selectedCell = null;
+            }
         }
 
         public Cell GetCell(Vector2Int position) {
-            return _cellsTable[position.y, position.x];
+            Cell cell;
+            try {
+                cell = _cellsTable[position.y, position.x];
+            }
+            catch (System.Exception) {
+                return null;
+            }
+
+            return cell;
         }
 
-        public List<Match> FindMatches() {
-            List<Match> rowMatches = FindInRows();
-            List<Match> colMatches = FindInCols();
+        private void Change(Cell firstCell, Cell secondCell, bool withMatchFinding = true) {
+            secondCell.UnChoose();
+            firstCell.UnChoose();
 
-            Debug.Log("Row " + rowMatches.Count + " Col " + colMatches.Count);
+            Figure firstFigure = firstCell.Figure;
+            firstCell.SetFigure(secondCell.Figure);
+            secondCell.SetFigure(firstFigure);
 
-            List<Match> resultMatches = new List<Match>();
-            resultMatches.AddRange(rowMatches);
-            resultMatches.AddRange(colMatches);
+            CellsChanged?.Invoke(firstCell, secondCell);
 
-            // for (int i = 0; i < resultMatches.Count - 1; i++) {
-            //     List<Match> removableMatches = new List<Match>();
-            //     for (int j = i; j < resultMatches.Count; j++) {
-            //         if (resultMatches[i].TryToMerge(resultMatches[j])) {
-            //             removableMatches.Add(resultMatches[j]);
-            //         }
-            //         resultMatches.RemoveAll(match => removableMatches.Contains(match));
-            //     }
-            // }
-            return resultMatches;
-
-            // foreach (var rowMatch in rowMatches) {
-            //     List<Match> removableMatches = new List<Match>();
-            //     foreach (var colsMatch in colsMatches) {
-            //         if (rowMatch.TryToMerge(colsMatch)) {
-            //             removableMatches.Add(colsMatch);
-            //         }
-            //     }
-            //     colsMatches.RemoveAll(match => removableMatches.Contains(match));
-            // }
-
-            // for (int i = 0; i < rowMatches.Count - 1; i++) {
-            //     List<Match> removableMatches = new List<Match>();
-            //     for (int j = i; j < rowMatches.Count; j++) {
-            //         if (rowMatches[i].TryToMerge(rowMatches[j])) {
-            //             removableMatches.Add(rowMatches[j]);
-            //         }
-            //         rowMatches.RemoveAll(match => removableMatches.Contains(match));
-            //     }
-            // }
+            if (!withMatchFinding) return;
+            Match match = FindFirstMatch();
+            if (match != null) {
+                MatchFound?.Invoke(match);
+                RemoveMatch(match);
+            }
+            else {
+                Change(firstCell, secondCell, false);
+            }
         }
 
-        private List<Match> FindInRows() {
-            List<Match> matches = new List<Match>();
+        private void RemoveMatch(Match match) {
+            int maxY = int.MinValue;
+            int minY = int.MaxValue;
+            foreach (var cell in match.Cells) {
+                cell.SetFigure(null);
+
+                maxY = Math.Max(maxY, cell.Position.y);
+                minY = Math.Min(maxY, cell.Position.y);
+            }
+
+            List<Cell> emptyCells = new List<Cell>();
+            int yDelta = maxY + 1 - minY;
+            foreach (var cell in match.Cells) {
+                Cell replaceableCell = GetCell(new Vector2Int(cell.Position.x, cell.Position.y + yDelta));
+                if (replaceableCell == null) {
+                    
+                }
+            }
+        }
+
+        private Match FindFirstMatch() {
+            List<Cell> matchedCells = new List<Cell>();
             for (int y = 0; y < _size.y; y++) {
-                Match possibleMatch = new Match(_cellsTable[y, 0]);
-                for (int x = 1; x < _size.x; x++) {
-                    Cell currentCell = _cellsTable[y, x];
-
-                    if (possibleMatch.TryToAdd(currentCell)) continue;
-
-                    if (possibleMatch.Count >= 3) {
-                        matches.Add(possibleMatch);
+                for (int x = 0; x < _size.x; x++) {
+                    Cell currentCell = GetCell(new Vector2Int(x, y));
+                    Match possibleMatch = new Match(currentCell);
+                    Match findedMatch = CheckCell(new Vector2Int(x, y), possibleMatch, matchedCells);
+                    if (findedMatch.Count > 2) {
+                        return findedMatch;
                     }
-                    possibleMatch = new Match(currentCell);
                 }
             }
-            return matches;
+            return null;
         }
 
-        private List<Match> FindInCols() {
-            List<Match> matches = new List<Match>();
-            for (int x = 0; x < _size.x; x++) {
-                Match possibleMatch = new Match(_cellsTable[0, x]);
-                for (int y = 1; y < _size.y; y++) {
-                    Cell currentCell = _cellsTable[y, x];
+        private void RemoveMatches() {
+            Match match = FindFirstMatch();
+            if (match == null) return;
 
-                    if (possibleMatch.TryToAdd(currentCell)) continue;
-
-                    if (possibleMatch.Count >= 3) {
-                        matches.Add(possibleMatch);
-                    }
-                    possibleMatch = new Match(currentCell);
+            while (match != null) {
+                foreach (var cell in match.Cells) {
+                    cell.SetFigure(new Figure());
                 }
+                match = FindFirstMatch();
             }
-            return matches;
+        }
+
+        private Match CheckCell(Vector2Int position, Match possibleMatch, List<Cell> matchedCells) {
+            Cell currentCell = GetCell(position);
+
+            if (matchedCells.Contains(currentCell)) return possibleMatch;
+            if (!possibleMatch.TryToAdd(currentCell)) return possibleMatch;
+
+            matchedCells.Add(currentCell);
+
+            if (position.y > 0) {
+                CheckCell(position + Vector2Int.down, possibleMatch, matchedCells);
+            }
+            if (position.y < _size.y - 1) {
+                CheckCell(position + Vector2Int.up, possibleMatch, matchedCells);
+            }
+            if (position.x > 0) {
+                CheckCell(position + Vector2Int.left, possibleMatch, matchedCells);
+            }
+            if (position.x < _size.x - 1) {
+                CheckCell(position + Vector2Int.right, possibleMatch, matchedCells);
+            }
+
+            return possibleMatch;
         }
     }
 }

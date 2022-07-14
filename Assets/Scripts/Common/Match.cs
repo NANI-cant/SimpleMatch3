@@ -47,5 +47,14 @@ namespace TableLogic {
 
             return false;
         }
+
+        public override string ToString() {
+            string result = $"Match \n";
+            result += $"count: {Count}\n";
+            foreach (var position in _positions) {
+                result += $"\t {position}\n";
+            }
+            return result;
+        }
     }
 }

@@ -1,7 +1,6 @@
 using UnityEngine;
 
 namespace TableLogic {
-    [System.Serializable]
     public class Figure {
         private readonly Color[] _availableColors = new Color[] {
             Color.red,
