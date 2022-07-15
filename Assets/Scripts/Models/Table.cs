@@ -115,8 +115,25 @@ namespace TableLogic {
                 }
             }
             dropedFigures.Distinct();
-            Debug.Log(this);
             FiguresReplaced?.Invoke(dropedFigures);
+
+            FillEmpties();
+        }
+
+        private void FillEmpties() {
+            List<Figure> arrivedFigures = new List<Figure>();
+            for (int y = 0; y < _size.y; y++) {
+                for (int x = 0; x < _size.x; x++) {
+                    Vector2Int position = new Vector2Int(x, y);
+                    Figure currentFigure = GetFigure(position);
+                    if (currentFigure != null) continue;
+
+                    Figure newFigure = new Figure(this, position);
+                    SetFigure(position, newFigure);
+                    arrivedFigures.Add(newFigure);
+                }
+            }
+            FiguresArrived?.Invoke(arrivedFigures);
         }
 
         private Match FindFirstMatch() {
@@ -124,7 +141,8 @@ namespace TableLogic {
             for (int y = 0; y < _size.y; y++) {
                 for (int x = 0; x < _size.x; x++) {
                     Figure currentFigure = GetFigure(new Vector2Int(x, y));
-                    if(currentFigure == null) continue;
+                    if (currentFigure == null) continue;
+
                     Match possibleMatch = new Match(currentFigure);
                     Match findedMatch = CheckFigure(new Vector2Int(x, y), possibleMatch, matchedFigures);
                     if (findedMatch.Count > 2) {
