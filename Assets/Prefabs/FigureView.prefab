@@ -49,7 +49,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _movingSpeed: 6
   _popSpeed: 3
-  _markedSprite: {fileID: 21300000, guid: 83d6cd59e620f2a4d994604e3c446471, type: 3}
+  _markedSprite: {fileID: 21300000, guid: e043648edaf9a88499ab5f319a218915, type: 3}
   _unMarkedSprite: {fileID: 21300000, guid: 7de52d7fb2669fc4ab017d2d9ada5d3e, type: 3}
   _cellRenderer: {fileID: 4087649928842239661}
 --- !u!212 &4490677939655192623
