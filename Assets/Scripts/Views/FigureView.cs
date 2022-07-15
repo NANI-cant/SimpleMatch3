@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using PersistentData;
 using UnityEngine;
 
 namespace TableLogic {
@@ -29,7 +30,7 @@ namespace TableLogic {
             _figure.Choosed += Mark;
             _figure.UnChoosed += UnMark;
 
-            _spriteRenderer.color = _figure.Color;
+            _spriteRenderer.sprite = (_figure.Data as FigureData).Sprite;
         }
 
         private void OnMouseDown() {
@@ -57,7 +58,7 @@ namespace TableLogic {
             while (currentAlpha > 0) {
                 currentAlpha -= _popSpeed * Time.deltaTime;
 
-                Color currentColor = _figure.Color;
+                Color currentColor = _spriteRenderer.color;
                 currentColor.a = currentAlpha;
                 _spriteRenderer.color = currentColor;
 
@@ -67,13 +68,15 @@ namespace TableLogic {
         }
 
         private void Mark() {
-            Color transparent = _figure.Color;
+            Color transparent = _spriteRenderer.color;
             transparent.a = 0.5f;
             _spriteRenderer.color = transparent;
         }
 
         private void UnMark() {
-            _spriteRenderer.color = _figure.Color;
+            Color solid = _spriteRenderer.color;
+            solid.a = 1f;
+            _spriteRenderer.color = solid;
         }
     }
 }

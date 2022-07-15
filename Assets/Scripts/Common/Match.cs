@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace TableLogic {
     public class Match {
-        private int _targetId;
+        private string _targetId;
         private List<Figure> _matchedFigures;
         private List<Vector2Int> _positions;
 
-        public int TargetId => _targetId;
+        public string TargetId => _targetId;
         public int Count => _matchedFigures.Count;
         public IEnumerable<Vector2Int> Positions => _positions;
         public IEnumerable<Figure> Figures => _matchedFigures;

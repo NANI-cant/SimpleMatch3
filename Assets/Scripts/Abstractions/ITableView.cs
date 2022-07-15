@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TableLogic;
 
-namespace TableLogic {
+namespace Abstraction {
     public interface ITableView {
         Task OnFiguresDestroyedAsync(List<Figure> figures);
         Task OnFiguresReplacedAsync(List<Figure> figures);
