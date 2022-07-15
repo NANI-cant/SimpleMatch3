@@ -23,11 +23,13 @@ namespace TableLogic {
         private void OnEnable() {
             _table.FiguresDestroyed += OnFiguresDestroyed;
             _table.FiguresReplaced += OnFiguresReplaced;
+            _table.FiguresArrived += OnFiguresArrived;
         }
 
         private void OnDisable() {
             _table.FiguresDestroyed -= OnFiguresDestroyed;
             _table.FiguresReplaced -= OnFiguresReplaced;
+            _table.FiguresArrived -= OnFiguresArrived;
         }
 
         public Vector2 ToWorldPosition(Vector2Int position) {
@@ -50,12 +52,23 @@ namespace TableLogic {
             await Task.WhenAll(_runningTasks);
             DisableTableInput();
 
+            Dictionary<int, int> xMinYRelation = new Dictionary<int, int>();
+            foreach (var figure in figures) {
+                if (xMinYRelation.ContainsKey(figure.Position.x)) {
+                    xMinYRelation[figure.Position.x] = Mathf.Min(xMinYRelation[figure.Position.x], figure.Position.y);
+                }
+                else {
+                    xMinYRelation[figure.Position.x] = figure.Position.y;
+                }
+            }
+
             foreach (var figure in figures) {
                 Vector2Int position = figure.Position;
-                position.y = _size.y;
+                position.y = _size.y + position.y - xMinYRelation[figure.Position.x];
 
                 FigureView figureView = Instantiate(_figureTemplate, ToWorldPosition(position), Quaternion.identity, transform);
                 figureView.Construct(figure, this);
+                _figuresDictionary.Add(figure, figureView);
 
                 _runningTasks.Add(figureView.MoveToPosition());
             }
