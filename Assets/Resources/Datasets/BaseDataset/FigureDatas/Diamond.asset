@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Diamond
   m_EditorClassIdentifier: 
   _id: diamond
-  _sprite: {fileID: 21300000, guid: 8c3bd315db29a95498c236540d31ae54, type: 3}
+  _sprite: {fileID: 21300000, guid: 300222c91430f4a488007e623cf45da5, type: 3}

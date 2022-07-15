@@ -6,12 +6,16 @@ namespace TableLogic {
     [RequireComponent(typeof(SpriteRenderer))]
     [RequireComponent(typeof(Collider2D))]
     public class FigureView : MonoBehaviour {
-        [SerializeField] private float _pulllingSpeed = 6f;
+        [SerializeField] private float _movingSpeed = 6f;
         [SerializeField] private float _popSpeed = 0.5f;
+
+        [SerializeField] private Sprite _markedSprite;
+        [SerializeField] private Sprite _unMarkedSprite;
+        [SerializeField] private SpriteRenderer _cellRenderer;
 
         private const double PULLINGACCURACITY = 0.1;
 
-        private SpriteRenderer _spriteRenderer;
+        private SpriteRenderer _figureRenderer;
         private Collider2D _collider;
         private Figure _figure;
         private TableView _table;
@@ -19,7 +23,7 @@ namespace TableLogic {
         public Vector2Int Position => _figure.Position;
 
         private void Awake() {
-            _spriteRenderer = GetComponent<SpriteRenderer>();
+            _figureRenderer = GetComponent<SpriteRenderer>();
             _collider = GetComponent<Collider2D>();
         }
 
@@ -30,7 +34,8 @@ namespace TableLogic {
             _figure.Choosed += Mark;
             _figure.UnChoosed += UnMark;
 
-            _spriteRenderer.sprite = (_figure.Data as FigureData).Sprite;
+            _figureRenderer.sprite = (_figure.Data as FigureData).Sprite;
+            UnMark();
         }
 
         private void OnMouseDown() {
@@ -46,7 +51,7 @@ namespace TableLogic {
 
             while (distance > PULLINGACCURACITY) {
                 Vector2 direction = (targetPosition - transform.position).normalized;
-                transform.Translate(direction * _pulllingSpeed * Time.deltaTime);
+                transform.Translate(direction * _movingSpeed * Time.deltaTime);
                 await Task.Yield();
                 distance = Vector2.Distance(transform.position, targetPosition);
             }
@@ -58,25 +63,16 @@ namespace TableLogic {
             while (currentAlpha > 0) {
                 currentAlpha -= _popSpeed * Time.deltaTime;
 
-                Color currentColor = _spriteRenderer.color;
+                Color currentColor = _figureRenderer.color;
                 currentColor.a = currentAlpha;
-                _spriteRenderer.color = currentColor;
+                _figureRenderer.color = currentColor;
 
                 await Task.Yield();
             }
             Destroy(gameObject);
         }
 
-        private void Mark() {
-            Color transparent = _spriteRenderer.color;
-            transparent.a = 0.5f;
-            _spriteRenderer.color = transparent;
-        }
-
-        private void UnMark() {
-            Color solid = _spriteRenderer.color;
-            solid.a = 1f;
-            _spriteRenderer.color = solid;
-        }
+        private void Mark() => _cellRenderer.sprite = _markedSprite;
+        private void UnMark() => _cellRenderer.sprite = _unMarkedSprite;
     }
 }
