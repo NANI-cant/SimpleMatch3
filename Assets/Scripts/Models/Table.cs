@@ -85,11 +85,13 @@ namespace TableLogic {
             await _tableView.OnFiguresReplacedAsync(new List<Figure>(new Figure[] { firstFigure, secondFigure }));
 
             if (!withMatchFinding) return;
-            Match match = FindFirstMatch();
+            Match match = FindStrongestMatch();
             if (match != null) {
                 while (match != null) {
+                    Debug.Log(this);
+                    Debug.Log(match);
                     await RemoveMatch(match);
-                    match = FindFirstMatch();
+                    match = FindStrongestMatch();
                 }
             }
             else {
@@ -121,7 +123,7 @@ namespace TableLogic {
                     }
                 }
             }
-            dropedFigures.Distinct();
+            dropedFigures = dropedFigures.Distinct().ToList();
             await _tableView.OnFiguresReplacedAsync(dropedFigures);
 
             await FillEmpties();
@@ -143,57 +145,89 @@ namespace TableLogic {
             await _tableView.OnFiguresArrivedAsync(arrivedFigures);
         }
 
-        private Match FindFirstMatch() {
-            List<Figure> matchedFigures = new List<Figure>();
-            for (int y = 0; y < _size.y; y++) {
-                for (int x = 0; x < _size.x; x++) {
-                    Figure currentFigure = GetFigure(new Vector2Int(x, y));
-                    if (currentFigure == null) continue;
-
-                    Match possibleMatch = new Match(currentFigure);
-                    Match findedMatch = CheckFigure(new Vector2Int(x, y), possibleMatch, matchedFigures);
-                    if (findedMatch.Count > 2) {
-                        return findedMatch;
-                    }
-                }
-            }
-            return null;
-        }
-
         private void RemoveMatches() {
-            Match match = FindFirstMatch();
+            Match match = FindStrongestMatch();
             if (match == null) return;
 
             while (match != null) {
                 foreach (var figure in match.Figures) {
                     SetFigure(figure.Position, _figureFabric.GetFigure(this, figure.Position));
                 }
-                match = FindFirstMatch();
+                match = FindStrongestMatch();
             }
         }
 
-        private Match CheckFigure(Vector2Int position, Match possibleMatch, List<Figure> matchedFigures) {
-            Figure currentFigure = GetFigure(position);
+        private Match FindStrongestMatch() {
+            List<Match> allMatches = FindAllMatches();
+            if (allMatches.Count == 0) return null;
 
-            if (matchedFigures.Contains(currentFigure)) return possibleMatch;
-            if (!possibleMatch.TryToAdd(currentFigure)) return possibleMatch;
-
-            matchedFigures.Add(currentFigure);
-
-            if (position.y > 0) {
-                CheckFigure(position + Vector2Int.down, possibleMatch, matchedFigures);
-            }
-            if (position.y < _size.y - 1) {
-                CheckFigure(position + Vector2Int.up, possibleMatch, matchedFigures);
-            }
-            if (position.x > 0) {
-                CheckFigure(position + Vector2Int.left, possibleMatch, matchedFigures);
-            }
-            if (position.x < _size.x - 1) {
-                CheckFigure(position + Vector2Int.right, possibleMatch, matchedFigures);
+            Match strongestMatch = allMatches[0];
+            foreach (var match in allMatches) {
+                if (match.Count > strongestMatch.Count) {
+                    strongestMatch = match;
+                }
             }
 
-            return possibleMatch;
+            return strongestMatch;
+        }
+
+        private List<Match> FindAllMatches() {
+            List<Match> matches = new List<Match>();
+
+            matches.AddRange(FindVerticalMatches());
+            matches.AddRange(FindHorizontalMatches());
+            matches.AddRange(DetectCrossMatches(matches));
+
+            return matches;
+        }
+
+        private List<Match> DetectCrossMatches(List<Match> matches) {
+            List<Match> crossMatches = new List<Match>();
+
+            for (int i = 0; i < matches.Count - 1; i++) {
+                for (int j = i + 1; j < matches.Count; j++) {
+                    Match mainMatch = new Match(matches[i]);
+                    if (mainMatch.TryToMerge(matches[j])) {
+                        crossMatches.Add(mainMatch);
+                    }
+                }
+            }
+
+            return crossMatches;
+        }
+
+        private List<Match> FindVerticalMatches() {
+            List<Match> matches = new List<Match>();
+            for (int y = 0; y < _size.y; y++) {
+                Match possibleMatch = new Match(GetFigure(new Vector2Int(0, y)));
+                for (int x = 0; x < _size.x; x++) {
+                    Figure figure = GetFigure(new Vector2Int(x, y));
+                    if (possibleMatch.TryToAdd(figure)) continue;
+
+                    if (possibleMatch.Count >= 3) matches.Add(possibleMatch);
+
+                    possibleMatch = new Match(figure);
+                }
+                if (possibleMatch.Count >= 3) matches.Add(possibleMatch);
+            }
+            return matches;
+        }
+
+        private List<Match> FindHorizontalMatches() {
+            List<Match> matches = new List<Match>();
+            for (int x = 0; x < _size.x; x++) {
+                Match possibleMatch = new Match(GetFigure(new Vector2Int(x, 0)));
+                for (int y = 0; y < _size.y; y++) {
+                    Figure figure = GetFigure(new Vector2Int(x, y));
+                    if (possibleMatch.TryToAdd(figure)) continue;
+
+                    if (possibleMatch.Count >= 3) matches.Add(possibleMatch);
+
+                    possibleMatch = new Match(figure);
+                }
+                if (possibleMatch.Count >= 3) matches.Add(possibleMatch);
+            }
+            return matches;
         }
 
         public override string ToString() {

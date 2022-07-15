@@ -69,6 +69,7 @@ namespace TableLogic {
 
             List<Task> popings = new List<Task>();
             foreach (var figure in figures) {
+                Debug.Log(figure);
                 popings.Add(_figuresDictionary[figure].Pop());
                 _figuresDictionary.Remove(figure);
             }
