@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using Zenject;
 
 namespace TableLogic {
     public class TableView : MonoBehaviour, ITableView {
@@ -12,27 +11,18 @@ namespace TableLogic {
         private Vector2 _drawOffset;
         private Dictionary<Figure, FigureView> _figuresDictionary = new Dictionary<Figure, FigureView>();
 
-        [Inject]
-        public void Construct(Table table) {
-            _table = table;
+        private void Awake() {
+            _table = new Table(this);
             _table.Generate(_size);
         }
 
-        public Vector2 ToWorldPosition(Vector2Int position) {
-            return transform.TransformPoint(_drawOffset) + new Vector3(position.x, position.y, 0);
+        private void Start() {
+            _drawOffset = _table.Size / -2;
+            DrawStartTable();
         }
 
-        private void DisableTableInput() {
-            foreach (var pair in _figuresDictionary) {
-                pair.Value.Disable();
-            }
-        }
-
-        private void EnableTableInput() {
-            foreach (var pair in _figuresDictionary) {
-                pair.Value.Enable();
-            }
-        }
+        public Vector2 ToWorldPosition(Vector2Int position)
+            => transform.TransformPoint(_drawOffset) + new Vector3(position.x, position.y, 0);
 
         public async Task OnFiguresArrivedAsync(List<Figure> figures) {
             DisableTableInput();
@@ -88,14 +78,21 @@ namespace TableLogic {
             EnableTableInput();
         }
 
-        private void Start() {
-            _drawOffset = _table.Size / -2;
-            DrawTable(_table.Size);
+        private void EnableTableInput() {
+            foreach (var pair in _figuresDictionary) {
+                pair.Value.Enable();
+            }
         }
 
-        private void DrawTable(Vector2Int size) {
-            for (int y = 0; y < size.y; y++) {
-                for (int x = 0; x < size.x; x++) {
+        private void DisableTableInput() {
+            foreach (var pair in _figuresDictionary) {
+                pair.Value.Disable();
+            }
+        }
+
+        private void DrawStartTable() {
+            for (int y = 0; y < _table.Size.y; y++) {
+                for (int x = 0; x < _table.Size.x; x++) {
                     Figure figure = _table.GetFigure(new Vector2Int(x, y));
 
                     var figureView = Instantiate(_figureTemplate, ToWorldPosition(new Vector2Int(x, y)), Quaternion.identity, transform);
@@ -104,18 +101,6 @@ namespace TableLogic {
                     _figuresDictionary.Add(figure, figureView);
                 }
             }
-        }
-
-        [ContextMenu("Re Generate")]
-        public void ReGenerate() {
-            foreach (var pair in _figuresDictionary) {
-                Destroy(pair.Value.gameObject);
-            }
-            _figuresDictionary.Clear();
-
-            _table.Generate(_size);
-            _drawOffset = _table.Size / -2;
-            DrawTable(_table.Size);
         }
     }
 }
