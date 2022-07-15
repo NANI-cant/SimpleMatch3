@@ -14,9 +14,6 @@ namespace TableLogic {
         private void Awake() {
             _table = new Table(this);
             _table.Generate(_size);
-        }
-
-        private void Start() {
             _drawOffset = _table.Size / -2;
             DrawStartTable();
         }
