@@ -5,41 +5,42 @@ using UnityEngine;
 namespace TableLogic {
     public class Match {
         private int _targetId;
-        private List<Cell> _matchedCells;
+        private List<Figure> _matchedFigures;
         private List<Vector2Int> _positions;
 
         public int TargetId => _targetId;
-        public int Count => _matchedCells.Count;
+        public int Count => _matchedFigures.Count;
         public IEnumerable<Vector2Int> Positions => _positions;
-        public IEnumerable<Cell> Cells => _matchedCells;
+        public IEnumerable<Figure> Figures => _matchedFigures;
 
-        public Match(Cell firstCell) {
-            _matchedCells = new List<Cell>();
+        public Match(Figure firstFigure) {
+            _matchedFigures = new List<Figure>();
             _positions = new List<Vector2Int>();
 
-            _targetId = firstCell.Figure.Id;
-            _matchedCells.Add(firstCell);
-            _positions.Add(firstCell.Position);
+            _targetId = firstFigure.Id;
+            _matchedFigures.Add(firstFigure);
+            _positions.Add(firstFigure.Position);
         }
 
-        public bool TryToAdd(Cell cell) {
-            if (cell.Figure.Id != _targetId) return false;
-            if (_matchedCells.Contains(cell)) return true;
+        public bool TryToAdd(Figure figure) {
+            if (figure == null) return false;
+            if (figure.Id != _targetId) return false;
+            if (_matchedFigures.Contains(figure)) return true;
 
-            _matchedCells.Add(cell);
-            _positions.Add(cell.Position);
+            _matchedFigures.Add(figure);
+            _positions.Add(figure.Position);
             return true;
         }
 
         public bool TryToMerge(Match match) {
             if (match.TargetId != _targetId) return false;
 
-            foreach (var cell in match.Cells) {
-                if (_matchedCells.Contains(cell)) {
-                    _matchedCells.AddRange(match.Cells);
+            foreach (var figure in match.Figures) {
+                if (_matchedFigures.Contains(figure)) {
+                    _matchedFigures.AddRange(match.Figures);
                     _positions.AddRange(match.Positions);
 
-                    _matchedCells = _matchedCells.Distinct().ToList();
+                    _matchedFigures = _matchedFigures.Distinct().ToList();
                     _positions = _positions.Distinct().ToList();
                     return true;
                 }

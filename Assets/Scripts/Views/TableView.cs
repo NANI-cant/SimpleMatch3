@@ -6,12 +6,11 @@ using Zenject;
 namespace TableLogic {
     public class TableView : MonoBehaviour {
         [SerializeField] private Vector2Int _size;
-        [SerializeField] private CellView _cellTemplate;
         [SerializeField] private FigureView _figureTemplate;
 
         private Table _table;
         private Vector2 _drawOffset;
-        private Dictionary<Cell, CellView> _cellsDictionary = new Dictionary<Cell, CellView>();
+        private Dictionary<Figure, FigureView> _figuresDictionary = new Dictionary<Figure, FigureView>();
 
         private List<Task> _runningTasks = new List<Task>();
 
@@ -22,55 +21,72 @@ namespace TableLogic {
         }
 
         private void OnEnable() {
-            _table.MatchFound += OnMatchFound;
-            _table.CellsChanged += OnCellsChanged;
+            _table.FiguresDestroyed += OnFiguresDestroyed;
+            _table.FiguresReplaced += OnFiguresReplaced;
         }
+
         private void OnDisable() {
-            _table.MatchFound -= OnMatchFound;
-            _table.CellsChanged -= OnCellsChanged;
+            _table.FiguresDestroyed -= OnFiguresDestroyed;
+            _table.FiguresReplaced -= OnFiguresReplaced;
         }
 
-        private async void OnCellsChanged(Cell first, Cell second) {
-            await Task.WhenAll(_runningTasks);
-
-            CellView firstView = _cellsDictionary[first];
-            CellView secondView = _cellsDictionary[second];
-
-            FigureView bufFigure = firstView.FigureView;
-            firstView.FigureView = secondView.FigureView;
-            secondView.FigureView = bufFigure;
-
-            DisableTableInput();
-            Task firstPulling = firstView.PullFigure();
-            Task secondPulling = secondView.PullFigure();
-            _runningTasks.AddRange(new Task[] { firstPulling, secondPulling });
-
-            await Task.WhenAll(new Task[] { firstPulling, secondPulling });
-            EnableTableInput();
+        public Vector2 ToWorldPosition(Vector2Int position) {
+            return transform.TransformPoint(_drawOffset) + new Vector3(position.x, position.y, 0);
         }
 
         private void DisableTableInput() {
-            foreach (var pair in _cellsDictionary) {
+            foreach (var pair in _figuresDictionary) {
                 pair.Value.Disable();
             }
         }
 
         private void EnableTableInput() {
-            foreach (var pair in _cellsDictionary) {
+            foreach (var pair in _figuresDictionary) {
                 pair.Value.Enable();
             }
         }
 
-        private async void OnMatchFound(Match match) {
+        private async void OnFiguresArrived(List<Figure> figures) {
             await Task.WhenAll(_runningTasks);
-            List<Vector2Int> matchedPositions = new List<Vector2Int>(match.Positions);
+            DisableTableInput();
 
-            List<Task> pops = new List<Task>();
-            foreach (var cell in match.Cells) {
-                pops.Add(_cellsDictionary[cell].PopFigure());
+            foreach (var figure in figures) {
+                Vector2Int position = figure.Position;
+                position.y = _size.y;
+
+                FigureView figureView = Instantiate(_figureTemplate, ToWorldPosition(position), Quaternion.identity, transform);
+                figureView.Construct(figure, this);
+
+                _runningTasks.Add(figureView.MoveToPosition());
             }
-            _runningTasks.AddRange(pops);
-            await Task.WhenAll(pops);
+
+            await Task.WhenAll(_runningTasks);
+            EnableTableInput();
+        }
+
+        private async void OnFiguresReplaced(List<Figure> figures) {
+            await Task.WhenAll(_runningTasks);
+            DisableTableInput();
+
+            foreach (var figure in figures) {
+                _runningTasks.Add(_figuresDictionary[figure].MoveToPosition());
+            }
+
+            await Task.WhenAll(_runningTasks);
+            EnableTableInput();
+        }
+
+        private async void OnFiguresDestroyed(List<Figure> figures) {
+            await Task.WhenAll(_runningTasks);
+            DisableTableInput();
+
+            foreach (var figure in figures) {
+                _runningTasks.Add(_figuresDictionary[figure].Pop());
+                _figuresDictionary.Remove(figure);
+            }
+
+            await Task.WhenAll(_runningTasks);
+            EnableTableInput();
         }
 
         private void Start() {
@@ -81,22 +97,22 @@ namespace TableLogic {
         private void DrawTable(Vector2Int size) {
             for (int y = 0; y < size.y; y++) {
                 for (int x = 0; x < size.x; x++) {
-                    Vector3 worldPosition = transform.TransformPoint(_drawOffset) + new Vector3(x, y, 0);
-                    var cell = Instantiate(_cellTemplate, worldPosition, Quaternion.identity, transform);
-                    var figure = Instantiate(_figureTemplate, worldPosition, Quaternion.identity, transform);
+                    Figure figure = _table.GetFigure(new Vector2Int(x, y));
 
-                    cell.Construct(_table.GetCell(new Vector2Int(x, y)), figure);
-                    _cellsDictionary.Add(_table.GetCell(new Vector2Int(x, y)), cell);
+                    var figureView = Instantiate(_figureTemplate, ToWorldPosition(new Vector2Int(x, y)), Quaternion.identity, transform);
+                    figureView.Construct(figure, this);
+
+                    _figuresDictionary.Add(figure, figureView);
                 }
             }
         }
 
         [ContextMenu("Re Generate")]
         public void ReGenerate() {
-            foreach (var pair in _cellsDictionary) {
+            foreach (var pair in _figuresDictionary) {
                 Destroy(pair.Value.gameObject);
             }
-            _cellsDictionary.Clear();
+            _figuresDictionary.Clear();
 
             _table.Generate(_size);
             _drawOffset = _table.Size / -2;

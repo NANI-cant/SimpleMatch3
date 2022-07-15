@@ -1,117 +1,132 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
 using UnityEngine;
 
 namespace TableLogic {
     public class Table {
-        public event Action<Match> MatchFound;
-        public event Action<Cell, Cell> CellsChanged;
+        public event Action<List<Figure>> FiguresDestroyed;
+        public event Action<List<Figure>> FiguresReplaced;
+        public event Action<List<Figure>> FiguresArrived;
 
-        private Cell[,] _cellsTable;
+        private Figure[,] _table;
         private Vector2Int _size;
-        private Cell _selectedCell;
+        private Figure _selectedFigure;
 
         public Vector2Int Size => _size;
 
         public void Generate(Vector2Int size) {
             _size = new Vector2Int(Mathf.Abs(size.x), Mathf.Abs(size.y));
 
-            _cellsTable = new Cell[_size.y, _size.x];
+            _table = new Figure[_size.y, _size.x];
 
             for (int y = 0; y < _size.y; y++) {
                 for (int x = 0; x < _size.x; x++) {
-                    _cellsTable[y, x] = new Cell(this, new Vector2Int(x, y));
+                    _table[y, x] = new Figure(this, new Vector2Int(x, y));
                 }
             }
 
             RemoveMatches();
         }
 
-        public bool TryChooseCell(Cell cell) {
-            if (_selectedCell == null) {
-                _selectedCell = cell;
+        public bool TryChooseFigure(Figure figure) {
+            if (_selectedFigure == null) {
+                _selectedFigure = figure;
                 return true;
             }
 
-            float cellsDistance = Vector2Int.Distance(cell.Position, _selectedCell.Position);
-            if (cellsDistance > 1) {
-                _selectedCell.UnChoose();
-                _selectedCell = cell;
+            float distance = Vector2Int.Distance(figure.Position, _selectedFigure.Position);
+            if (distance > 1) {
+                _selectedFigure.UnChoose();
+                _selectedFigure = figure;
                 return true;
             }
             else {
-                Change(_selectedCell, cell);
+                Change(_selectedFigure, figure);
                 return false;
             }
         }
 
-        public void UnChooseCell(Cell cell) {
-            if (_selectedCell == cell) {
-                _selectedCell = null;
+        public void UnChooseFigure(Figure figure) {
+            if (_selectedFigure == figure) {
+                _selectedFigure = null;
             }
         }
 
-        public Cell GetCell(Vector2Int position) {
-            Cell cell;
+        public Figure GetFigure(Vector2Int position) {
+            Figure figure;
             try {
-                cell = _cellsTable[position.y, position.x];
+                figure = _table[position.y, position.x];
             }
             catch (System.Exception) {
                 return null;
             }
 
-            return cell;
+            return figure;
         }
 
-        private void Change(Cell firstCell, Cell secondCell, bool withMatchFinding = true) {
-            secondCell.UnChoose();
-            firstCell.UnChoose();
+        private void SetFigure(Vector2Int position, Figure figure) {
+            _table[position.y, position.x] = figure;
+            figure?.SetPosition(position);
+        }
 
-            Figure firstFigure = firstCell.Figure;
-            firstCell.SetFigure(secondCell.Figure);
-            secondCell.SetFigure(firstFigure);
+        private void Change(Figure firstFigure, Figure secondFigure, bool withMatchFinding = true) {
+            secondFigure.UnChoose();
+            firstFigure.UnChoose();
 
-            CellsChanged?.Invoke(firstCell, secondCell);
+            Vector2Int secondPos = secondFigure.Position;
+            SetFigure(firstFigure.Position, secondFigure);
+            SetFigure(secondPos, firstFigure);
+
+            FiguresReplaced?.Invoke(new List<Figure>(new Figure[] { firstFigure, secondFigure }));
 
             if (!withMatchFinding) return;
             Match match = FindFirstMatch();
             if (match != null) {
-                MatchFound?.Invoke(match);
                 RemoveMatch(match);
             }
             else {
-                Change(firstCell, secondCell, false);
+                Change(firstFigure, secondFigure, false);
             }
         }
 
         private void RemoveMatch(Match match) {
-            int maxY = int.MinValue;
-            int minY = int.MaxValue;
-            foreach (var cell in match.Cells) {
-                cell.SetFigure(null);
-
-                maxY = Math.Max(maxY, cell.Position.y);
-                minY = Math.Min(maxY, cell.Position.y);
+            foreach (var figure in match.Figures) {
+                SetFigure(figure.Position, null);
             }
+            FiguresDestroyed?.Invoke(new List<Figure>(match.Figures));
 
-            List<Cell> emptyCells = new List<Cell>();
-            int yDelta = maxY + 1 - minY;
-            foreach (var cell in match.Cells) {
-                Cell replaceableCell = GetCell(new Vector2Int(cell.Position.x, cell.Position.y + yDelta));
-                if (replaceableCell == null) {
-                    
+            DropFiguresAbove(match.Positions);
+        }
+
+        private void DropFiguresAbove(IEnumerable<Vector2Int> positions) {
+            List<Figure> dropedFigures = new List<Figure>();
+            foreach (var position in positions) {
+                if (GetFigure(position) != null) continue;
+                int figuresAbove = 0;
+                for (int y = position.y + 1; y < _size.y; y++) {
+                    Figure anotherFigure = GetFigure(new Vector2Int(position.x, y));
+                    if (anotherFigure != null) {
+                        SetFigure(anotherFigure.Position, null);
+                        SetFigure(new Vector2Int(position.x, position.y + figuresAbove), anotherFigure);
+                        figuresAbove++;
+                        dropedFigures.Add(anotherFigure);
+                    }
                 }
             }
+            dropedFigures.Distinct();
+            Debug.Log(this);
+            FiguresReplaced?.Invoke(dropedFigures);
         }
 
         private Match FindFirstMatch() {
-            List<Cell> matchedCells = new List<Cell>();
+            List<Figure> matchedFigures = new List<Figure>();
             for (int y = 0; y < _size.y; y++) {
                 for (int x = 0; x < _size.x; x++) {
-                    Cell currentCell = GetCell(new Vector2Int(x, y));
-                    Match possibleMatch = new Match(currentCell);
-                    Match findedMatch = CheckCell(new Vector2Int(x, y), possibleMatch, matchedCells);
+                    Figure currentFigure = GetFigure(new Vector2Int(x, y));
+                    if(currentFigure == null) continue;
+                    Match possibleMatch = new Match(currentFigure);
+                    Match findedMatch = CheckFigure(new Vector2Int(x, y), possibleMatch, matchedFigures);
                     if (findedMatch.Count > 2) {
                         return findedMatch;
                     }
@@ -125,35 +140,54 @@ namespace TableLogic {
             if (match == null) return;
 
             while (match != null) {
-                foreach (var cell in match.Cells) {
-                    cell.SetFigure(new Figure());
+                foreach (var figure in match.Figures) {
+                    SetFigure(figure.Position, new Figure(this, figure.Position));
                 }
                 match = FindFirstMatch();
             }
         }
 
-        private Match CheckCell(Vector2Int position, Match possibleMatch, List<Cell> matchedCells) {
-            Cell currentCell = GetCell(position);
+        private Match CheckFigure(Vector2Int position, Match possibleMatch, List<Figure> matchedFigures) {
+            Figure currentFigure = GetFigure(position);
 
-            if (matchedCells.Contains(currentCell)) return possibleMatch;
-            if (!possibleMatch.TryToAdd(currentCell)) return possibleMatch;
+            if (matchedFigures.Contains(currentFigure)) return possibleMatch;
+            if (!possibleMatch.TryToAdd(currentFigure)) return possibleMatch;
 
-            matchedCells.Add(currentCell);
+            matchedFigures.Add(currentFigure);
 
             if (position.y > 0) {
-                CheckCell(position + Vector2Int.down, possibleMatch, matchedCells);
+                CheckFigure(position + Vector2Int.down, possibleMatch, matchedFigures);
             }
             if (position.y < _size.y - 1) {
-                CheckCell(position + Vector2Int.up, possibleMatch, matchedCells);
+                CheckFigure(position + Vector2Int.up, possibleMatch, matchedFigures);
             }
             if (position.x > 0) {
-                CheckCell(position + Vector2Int.left, possibleMatch, matchedCells);
+                CheckFigure(position + Vector2Int.left, possibleMatch, matchedFigures);
             }
             if (position.x < _size.x - 1) {
-                CheckCell(position + Vector2Int.right, possibleMatch, matchedCells);
+                CheckFigure(position + Vector2Int.right, possibleMatch, matchedFigures);
             }
 
             return possibleMatch;
+        }
+
+        public override string ToString() {
+            string str = "Table\n";
+            str += "\tSize: " + _size + "\n";
+            for (int y = _size.y - 1; y >= 0; y--) {
+                for (int x = 0; x < _size.x; x++) {
+                    var figure = GetFigure(new Vector2Int(x, y));
+                    if (figure == null) {
+                        str += "n ";
+                    }
+                    else {
+                        str += figure.Id + " ";
+                    }
+                }
+                str += "\n";
+            }
+
+            return str;
         }
     }
 }
