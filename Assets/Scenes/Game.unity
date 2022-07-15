@@ -237,7 +237,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _size: {x: 5, y: 9}
-  _cellTemplate: {fileID: 487561942477617130, guid: 459aea81602b76944b863c04e6f74f55, type: 3}
   _figureTemplate: {fileID: 7670690439725906816, guid: 05b24376b190c43408d08d00c46138d9, type: 3}
 --- !u!4 &1054380526
 Transform:
@@ -331,3 +330,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8c2b7e57b31acb4b96af8d0c4d72e56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _tableView: {fileID: 1054380525}

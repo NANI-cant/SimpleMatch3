@@ -7,7 +7,8 @@ namespace TableLogic {
             Color.red,
             Color.blue,
             Color.yellow,
-            Color.green
+            Color.green,
+            Color.magenta,
         };
 
         public event Action<Figure> Choosed;

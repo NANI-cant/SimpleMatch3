@@ -1,19 +1,20 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace TableLogic {
     public class Table {
-        public event Action<List<Figure>> FiguresDestroyed;
-        public event Action<List<Figure>> FiguresReplaced;
-        public event Action<List<Figure>> FiguresArrived;
-
         private Figure[,] _table;
         private Vector2Int _size;
         private Figure _selectedFigure;
+        private ITableView _tableView;
 
         public Vector2Int Size => _size;
+
+        public Table(ITableView tableView) {
+            _tableView = tableView;
+        }
 
         public void Generate(Vector2Int size) {
             _size = new Vector2Int(Mathf.Abs(size.x), Mathf.Abs(size.y));
@@ -70,7 +71,7 @@ namespace TableLogic {
             figure?.SetPosition(position);
         }
 
-        private void Change(Figure firstFigure, Figure secondFigure, bool withMatchFinding = true) {
+        private async void Change(Figure firstFigure, Figure secondFigure, bool withMatchFinding = true) {
             secondFigure.UnChoose();
             firstFigure.UnChoose();
 
@@ -78,28 +79,31 @@ namespace TableLogic {
             SetFigure(firstFigure.Position, secondFigure);
             SetFigure(secondPos, firstFigure);
 
-            FiguresReplaced?.Invoke(new List<Figure>(new Figure[] { firstFigure, secondFigure }));
+            await _tableView.OnFiguresReplacedAsync(new List<Figure>(new Figure[] { firstFigure, secondFigure }));
 
             if (!withMatchFinding) return;
             Match match = FindFirstMatch();
             if (match != null) {
-                RemoveMatch(match);
+                while (match != null) {
+                    await RemoveMatch(match);
+                    match = FindFirstMatch();
+                }
             }
             else {
                 Change(firstFigure, secondFigure, false);
             }
         }
 
-        private void RemoveMatch(Match match) {
+        private async Task RemoveMatch(Match match) {
             foreach (var figure in match.Figures) {
                 SetFigure(figure.Position, null);
             }
-            FiguresDestroyed?.Invoke(new List<Figure>(match.Figures));
+            await _tableView.OnFiguresDestroyedAsync(new List<Figure>(match.Figures));
 
-            DropFiguresAbove(match.Positions);
+            await DropFiguresAbove(match.Positions);
         }
 
-        private void DropFiguresAbove(IEnumerable<Vector2Int> positions) {
+        private async Task DropFiguresAbove(IEnumerable<Vector2Int> positions) {
             List<Figure> dropedFigures = new List<Figure>();
             foreach (var position in positions) {
                 if (GetFigure(position) != null) continue;
@@ -115,12 +119,12 @@ namespace TableLogic {
                 }
             }
             dropedFigures.Distinct();
-            FiguresReplaced?.Invoke(dropedFigures);
+            await _tableView.OnFiguresReplacedAsync(dropedFigures);
 
-            FillEmpties();
+            await FillEmpties();
         }
 
-        private void FillEmpties() {
+        private async Task FillEmpties() {
             List<Figure> arrivedFigures = new List<Figure>();
             for (int y = 0; y < _size.y; y++) {
                 for (int x = 0; x < _size.x; x++) {
@@ -133,7 +137,7 @@ namespace TableLogic {
                     arrivedFigures.Add(newFigure);
                 }
             }
-            FiguresArrived?.Invoke(arrivedFigures);
+            await _tableView.OnFiguresArrivedAsync(arrivedFigures);
         }
 
         private Match FindFirstMatch() {
