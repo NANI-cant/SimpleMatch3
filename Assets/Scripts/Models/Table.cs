@@ -30,6 +30,23 @@ namespace TableLogic {
             RemoveMatches();
         }
 
+        public Figure GetFigure(Vector2Int position) {
+            Figure figure;
+            try {
+                figure = _table[position.y, position.x];
+            }
+            catch (System.Exception) {
+                return null;
+            }
+
+            return figure;
+        }
+
+        private void SetFigure(Vector2Int position, Figure figure) {
+            _table[position.y, position.x] = figure;
+            figure?.SetPosition(position);
+        }
+
         public bool TryChooseFigure(Figure figure) {
             if (_selectedFigure == null) {
                 _selectedFigure = figure;
@@ -52,23 +69,6 @@ namespace TableLogic {
             if (_selectedFigure == figure) {
                 _selectedFigure = null;
             }
-        }
-
-        public Figure GetFigure(Vector2Int position) {
-            Figure figure;
-            try {
-                figure = _table[position.y, position.x];
-            }
-            catch (System.Exception) {
-                return null;
-            }
-
-            return figure;
-        }
-
-        private void SetFigure(Vector2Int position, Figure figure) {
-            _table[position.y, position.x] = figure;
-            figure?.SetPosition(position);
         }
 
         private async void Change(Figure firstFigure, Figure secondFigure, bool withMatchFinding = true) {

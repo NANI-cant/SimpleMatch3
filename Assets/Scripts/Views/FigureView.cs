@@ -26,8 +26,8 @@ namespace TableLogic {
             _figure = figure;
             _table = table;
 
-            _figure.Choosed += OnChoosen;
-            _figure.UnChoosed += OnUnChoosen;
+            _figure.Choosed += Mark;
+            _figure.UnChoosed += UnMark;
 
             _spriteRenderer.color = _figure.Color;
         }
@@ -36,18 +36,8 @@ namespace TableLogic {
             _figure.HandleClick();
         }
 
-        public void Mark() {
-            Color transparent = _figure.Color;
-            transparent.a = 0.5f;
-            _spriteRenderer.color = transparent;
-        }
-
-        public void UnMark() {
-            _spriteRenderer.color = _figure.Color;
-        }
-
-        private void OnUnChoosen(Figure figure) => UnMark();
-        private void OnChoosen(Figure figure) => Mark();
+        public void Enable() => _collider.enabled = true;
+        public void Disable() => _collider.enabled = false;
 
         public async Task MoveToPosition() {
             Vector3 targetPosition = _table.ToWorldPosition(_figure.Position);
@@ -62,9 +52,6 @@ namespace TableLogic {
             transform.position = targetPosition;
         }
 
-        public void Enable() => _collider.enabled = true;
-        public void Disable() => _collider.enabled = false;
-
         public async Task Pop() {
             float currentAlpha = 1f;
             while (currentAlpha > 0) {
@@ -77,6 +64,16 @@ namespace TableLogic {
                 await Task.Yield();
             }
             Destroy(gameObject);
+        }
+
+        private void Mark() {
+            Color transparent = _figure.Color;
+            transparent.a = 0.5f;
+            _spriteRenderer.color = transparent;
+        }
+
+        private void UnMark() {
+            _spriteRenderer.color = _figure.Color;
         }
     }
 }

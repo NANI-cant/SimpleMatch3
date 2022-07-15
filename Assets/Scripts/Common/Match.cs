@@ -32,23 +32,6 @@ namespace TableLogic {
             return true;
         }
 
-        public bool TryToMerge(Match match) {
-            if (match.TargetId != _targetId) return false;
-
-            foreach (var figure in match.Figures) {
-                if (_matchedFigures.Contains(figure)) {
-                    _matchedFigures.AddRange(match.Figures);
-                    _positions.AddRange(match.Positions);
-
-                    _matchedFigures = _matchedFigures.Distinct().ToList();
-                    _positions = _positions.Distinct().ToList();
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         public override string ToString() {
             string result = $"Match \n";
             result += $"count: {Count}\n";

@@ -11,8 +11,8 @@ namespace TableLogic {
             Color.magenta,
         };
 
-        public event Action<Figure> Choosed;
-        public event Action<Figure> UnChoosed;
+        public event Action Choosed;
+        public event Action UnChoosed;
 
         private Table _table;
         private Vector2Int _position;
@@ -46,13 +46,13 @@ namespace TableLogic {
             if (!_table.TryChooseFigure(this)) return;
 
             _isChoosen = true;
-            Choosed?.Invoke(this);
+            Choosed?.Invoke();
         }
 
         public void UnChoose() {
             _table.UnChooseFigure(this);
             _isChoosen = false;
-            UnChoosed?.Invoke(this);
+            UnChoosed?.Invoke();
         }
 
         public void SetPosition(Vector2Int position) {
