@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Abstraction;
 using UnityEngine;
 
 namespace TableLogic {
@@ -9,11 +10,13 @@ namespace TableLogic {
         private Vector2Int _size;
         private Figure _selectedFigure;
         private ITableView _tableView;
+        private IFigureFabric _figureFabric;
 
         public Vector2Int Size => _size;
 
-        public Table(ITableView tableView) {
+        public Table(ITableView tableView, IFigureFabric figureFabric) {
             _tableView = tableView;
+            _figureFabric = figureFabric;
         }
 
         public void Generate(Vector2Int size) {
@@ -23,7 +26,7 @@ namespace TableLogic {
 
             for (int y = 0; y < _size.y; y++) {
                 for (int x = 0; x < _size.x; x++) {
-                    _table[y, x] = new Figure(this, new Vector2Int(x, y));
+                    _table[y, x] = _figureFabric.GetFigure(this, new Vector2Int(x, y));
                 }
             }
 
@@ -132,7 +135,7 @@ namespace TableLogic {
                     Figure currentFigure = GetFigure(position);
                     if (currentFigure != null) continue;
 
-                    Figure newFigure = new Figure(this, position);
+                    Figure newFigure = _figureFabric.GetFigure(this, position);
                     SetFigure(position, newFigure);
                     arrivedFigures.Add(newFigure);
                 }
@@ -163,7 +166,7 @@ namespace TableLogic {
 
             while (match != null) {
                 foreach (var figure in match.Figures) {
-                    SetFigure(figure.Position, new Figure(this, figure.Position));
+                    SetFigure(figure.Position, _figureFabric.GetFigure(this, figure.Position));
                 }
                 match = FindFirstMatch();
             }

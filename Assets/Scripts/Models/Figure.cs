@@ -1,33 +1,23 @@
 using System;
+using Abstraction;
 using UnityEngine;
 
 namespace TableLogic {
     public class Figure {
-        private readonly Color[] _availableColors = new Color[] {
-            Color.red,
-            Color.blue,
-            Color.yellow,
-            Color.green,
-            Color.magenta,
-        };
-
         public event Action Choosed;
         public event Action UnChoosed;
 
         private Table _table;
         private Vector2Int _position;
         private bool _isChoosen;
-        private Color _color;
-        private int _id;
+        private IFigureData _data;
 
-        public Color Color => _color;
-        public int Id => _id;
+        public string Id => _data.Id;
+        public IFigureData Data => _data;
         public Vector2Int Position => _position;
 
-        public Figure(Table table, Vector2Int position) {
-            _id = UnityEngine.Random.Range(0, _availableColors.Length);
-            _color = _availableColors[_id];
-
+        public Figure(Table table, Vector2Int position, IFigureData figureData) {
+            _data = figureData;
             _position = position;
             _table = table;
             _isChoosen = false;

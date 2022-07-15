@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Abstraction;
+using Infrastructure;
 using UnityEngine;
 
 namespace TableLogic {
@@ -12,7 +14,7 @@ namespace TableLogic {
         private Dictionary<Figure, FigureView> _figuresDictionary = new Dictionary<Figure, FigureView>();
 
         private void Awake() {
-            _table = new Table(this);
+            _table = new Table(this, new FigureFabric());
             _table.Generate(_size);
             _drawOffset = _table.Size / -2;
             DrawStartTable();
