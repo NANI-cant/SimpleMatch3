@@ -4,7 +4,7 @@ using UnityEngine;
 using Zenject;
 
 namespace TableLogic {
-    public class TableView : MonoBehaviour {
+    public class TableView : MonoBehaviour, ITableView {
         [SerializeField] private Vector2Int _size;
         [SerializeField] private FigureView _figureTemplate;
 
@@ -12,24 +12,10 @@ namespace TableLogic {
         private Vector2 _drawOffset;
         private Dictionary<Figure, FigureView> _figuresDictionary = new Dictionary<Figure, FigureView>();
 
-        private List<Task> _runningTasks = new List<Task>();
-
         [Inject]
         public void Construct(Table table) {
             _table = table;
             _table.Generate(_size);
-        }
-
-        private void OnEnable() {
-            _table.FiguresDestroyed += OnFiguresDestroyed;
-            _table.FiguresReplaced += OnFiguresReplaced;
-            _table.FiguresArrived += OnFiguresArrived;
-        }
-
-        private void OnDisable() {
-            _table.FiguresDestroyed -= OnFiguresDestroyed;
-            _table.FiguresReplaced -= OnFiguresReplaced;
-            _table.FiguresArrived -= OnFiguresArrived;
         }
 
         public Vector2 ToWorldPosition(Vector2Int position) {
@@ -48,8 +34,7 @@ namespace TableLogic {
             }
         }
 
-        private async void OnFiguresArrived(List<Figure> figures) {
-            await Task.WhenAll(_runningTasks);
+        public async Task OnFiguresArrivedAsync(List<Figure> figures) {
             DisableTableInput();
 
             Dictionary<int, int> xMinYRelation = new Dictionary<int, int>();
@@ -62,6 +47,7 @@ namespace TableLogic {
                 }
             }
 
+            List<Task> movings = new List<Task>();
             foreach (var figure in figures) {
                 Vector2Int position = figure.Position;
                 position.y = _size.y + position.y - xMinYRelation[figure.Position.x];
@@ -70,35 +56,35 @@ namespace TableLogic {
                 figureView.Construct(figure, this);
                 _figuresDictionary.Add(figure, figureView);
 
-                _runningTasks.Add(figureView.MoveToPosition());
+                movings.Add(figureView.MoveToPosition());
             }
 
-            await Task.WhenAll(_runningTasks);
+            await Task.WhenAll(movings);
             EnableTableInput();
         }
 
-        private async void OnFiguresReplaced(List<Figure> figures) {
-            await Task.WhenAll(_runningTasks);
+        public async Task OnFiguresReplacedAsync(List<Figure> figures) {
             DisableTableInput();
 
+            List<Task> movings = new List<Task>();
             foreach (var figure in figures) {
-                _runningTasks.Add(_figuresDictionary[figure].MoveToPosition());
+                movings.Add(_figuresDictionary[figure].MoveToPosition());
             }
 
-            await Task.WhenAll(_runningTasks);
+            await Task.WhenAll(movings);
             EnableTableInput();
         }
 
-        private async void OnFiguresDestroyed(List<Figure> figures) {
-            await Task.WhenAll(_runningTasks);
+        public async Task OnFiguresDestroyedAsync(List<Figure> figures) {
             DisableTableInput();
 
+            List<Task> popings = new List<Task>();
             foreach (var figure in figures) {
-                _runningTasks.Add(_figuresDictionary[figure].Pop());
+                popings.Add(_figuresDictionary[figure].Pop());
                 _figuresDictionary.Remove(figure);
             }
 
-            await Task.WhenAll(_runningTasks);
+            await Task.WhenAll(popings);
             EnableTableInput();
         }
 
