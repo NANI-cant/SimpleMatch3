@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Abstraction;
 using Infrastructure;
+using TableLogic;
 using UnityEngine;
 
-namespace TableLogic {
+namespace TableView {
     public class TableView : MonoBehaviour, ITableView {
         [SerializeField] private FigureView _figureTemplate;
         [SerializeField][Min(3)] private float _helpDelay;
@@ -65,7 +66,7 @@ namespace TableLogic {
             EnableTableInput();
             _isHelpingBlocking = false;
             _savedTableChangedTime = Time.time;
-            _helpFigures = _table.GetHelp();
+            _helpFigures = _table.Helper.GetHelp();
         }
 
         public async Task OnFiguresReplacedAsync(List<Figure> figures) {
@@ -139,7 +140,7 @@ namespace TableLogic {
                     _figuresDictionary.Add(figure, figureView);
                 }
             }
-            _helpFigures = _table.GetHelp();
+            _helpFigures = _table.Helper.GetHelp();
         }
     }
 }

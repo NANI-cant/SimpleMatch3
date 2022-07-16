@@ -35,14 +35,14 @@ namespace TableLogic {
         }
 
         public void Choose() {
-            if (!_table.TryChooseFigure(this)) return;
+            if (!_table.Selector.TryChooseFigure(this)) return;
 
             _isChoosen = true;
             Choosed?.Invoke();
         }
 
         public void UnChoose() {
-            _table.UnChooseFigure(this);
+            _table.Selector.UnChooseFigure(this);
             _isChoosen = false;
             UnChoosed?.Invoke();
         }

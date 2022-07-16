@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
 using PersistentData;
+using TableLogic;
 using UnityEngine;
 
-namespace TableLogic {
+namespace TableView {
     [RequireComponent(typeof(SpriteRenderer))]
     [RequireComponent(typeof(Collider2D))]
     public class FigureView : MonoBehaviour {
