@@ -36,8 +36,8 @@ namespace TableView {
             DrawStartTable();
         }
 
-        private void Update() {
-            if (_table != null) HandleHelp();
+        private async Task Update() {
+            if (_table != null) await HandleHelp();
         }
 
         public Vector2 ToWorldPosition(Vector2Int position)
@@ -120,11 +120,15 @@ namespace TableView {
             }
         }
 
-        private void HandleHelp() {
+        private async Task HandleHelp() {
             if (CanHelp) {
-                foreach (var figure in _helpFigures) {
-                    _figuresDictionary[figure].ShowHelp();
+                List<Task> tweenings = new List<Task>();
+                for (int i = 0; i < _helpFigures.Length; i++) {
+                    Figure thisFigure = _helpFigures[i];
+                    Figure nextFigure = _helpFigures[(i + 1) % _helpFigures.Length];
+                    tweenings.Add(_figuresDictionary[thisFigure].TweenHelp(ToWorldPosition(nextFigure.Position)));
                 }
+                await Task.WhenAll(tweenings);
             }
         }
 
