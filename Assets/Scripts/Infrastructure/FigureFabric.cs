@@ -11,6 +11,10 @@ namespace Infrastructure {
             _dataset = Resources.FindObjectsOfTypeAll<Dataset>()[0];
         }
 
+        public Void GetVoid() {
+            return new Void();
+        }
+
         public Figure GetFigure(Table table, Vector2Int position) {
             return new Figure(table, position, _dataset.GetRandom());
         }

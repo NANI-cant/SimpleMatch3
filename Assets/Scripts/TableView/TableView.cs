@@ -1,15 +1,15 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Abstraction;
 using Infrastructure;
+using TableLogic;
 using UnityEngine;
 
-namespace TableLogic {
+namespace TableView {
     public class TableView : MonoBehaviour, ITableView {
-        [SerializeField] private Vector2Int _size;
         [SerializeField] private FigureView _figureTemplate;
         [SerializeField][Min(3)] private float _helpDelay;
+        [SerializeField] private string _mapPath;
 
         private Table _table;
         private Dictionary<Figure, FigureView> _figuresDictionary = new Dictionary<Figure, FigureView>();
@@ -21,14 +21,23 @@ namespace TableLogic {
         private bool CanHelp => (Time.time - _savedTableChangedTime) >= _helpDelay && !_isHelpingBlocking;
 
         private void Awake() {
-            _table = new Table(this, new FigureFabric());
-            _table.Generate(_size);
+            TableScheme scheme;
+            try {
+                scheme = new FileParcer(Application.dataPath + _mapPath).GenerateScheme();
+            }
+            catch (System.Exception ex) {
+                Debug.LogException(ex);
+                return;
+            }
+
+            _table = new Table(this, new FigureFabric(), scheme);
+            _table.Generate();
             _drawOffset = _table.Size / -2;
             DrawStartTable();
         }
 
         private void Update() {
-            HandleHelp();
+            if (_table != null) HandleHelp();
         }
 
         public Vector2 ToWorldPosition(Vector2Int position)
@@ -52,7 +61,7 @@ namespace TableLogic {
             List<Task> movings = new List<Task>();
             foreach (var figure in figures) {
                 Vector2Int position = figure.Position;
-                position.y = _size.y + position.y - xMinYRelation[figure.Position.x];
+                position.y = _table.Size.y + position.y - xMinYRelation[figure.Position.x];
 
                 FigureView figureView = Instantiate(_figureTemplate, ToWorldPosition(position), Quaternion.identity, transform);
                 figureView.Construct(figure, this);
@@ -65,7 +74,7 @@ namespace TableLogic {
             EnableTableInput();
             _isHelpingBlocking = false;
             _savedTableChangedTime = Time.time;
-            _helpFigures = _table.GetHelp();
+            _helpFigures = _table.Helper.GetHelp();
         }
 
         public async Task OnFiguresReplacedAsync(List<Figure> figures) {
@@ -131,6 +140,7 @@ namespace TableLogic {
             for (int y = 0; y < _table.Size.y; y++) {
                 for (int x = 0; x < _table.Size.x; x++) {
                     Figure figure = _table.GetFigure(new Vector2Int(x, y));
+                    if (figure == null) continue;
 
                     var figureView = Instantiate(_figureTemplate, ToWorldPosition(new Vector2Int(x, y)), Quaternion.identity, transform);
                     figureView.Construct(figure, this);
@@ -138,7 +148,7 @@ namespace TableLogic {
                     _figuresDictionary.Add(figure, figureView);
                 }
             }
-            _helpFigures = _table.GetHelp();
+            _helpFigures = _table.Helper.GetHelp();
         }
     }
 }
