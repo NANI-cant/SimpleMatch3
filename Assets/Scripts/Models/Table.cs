@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -50,6 +51,48 @@ namespace TableLogic {
             figure?.SetPosition(position);
         }
 
+        public Figure[] GetHelp() {
+            List<Match> possibleMatches = new List<Match>();
+            possibleMatches.AddRange(FindHorizontalMatches(targetCount: 2));
+            possibleMatches.AddRange(FindVerticalMatches(targetCount: 2));
+
+            foreach (var match in possibleMatches) {
+                List<Figure> figuresInMatch = new List<Figure>(match.Figures);
+                for (int i = 0; i < figuresInMatch.Count; i++) {
+                    Vector2Int directionToEdgeFigure = figuresInMatch[i].Position - figuresInMatch[(i + 1) % figuresInMatch.Count].Position;
+                    Vector2Int edgeFigurePosition = figuresInMatch[i].Position + directionToEdgeFigure;
+
+                    Figure edgeFigure = GetFigure(edgeFigurePosition);
+                    if (edgeFigure == null) continue;
+
+                    Figure helpfulFigure = FindAroundById(edgeFigurePosition, match.TargetId, -directionToEdgeFigure);
+                    if (helpfulFigure == null) continue;
+
+                    return new Figure[] { edgeFigure, helpfulFigure };
+                }
+            }
+            return new Figure[0];
+        }
+
+        private Figure FindAroundById(Vector2Int position, string id, Vector2Int dontLookInDirection) {
+            for (int i = 0; i < 4; i++) {
+                Vector3 lookDirection = Matrix4x4.Rotate(Quaternion.Euler(0, 0, 90 * i)).MultiplyPoint3x4(Vector3.up);
+                Vector2Int formalizedDirection = new Vector2Int(Mathf.RoundToInt(lookDirection.x), Mathf.RoundToInt(lookDirection.y));
+
+                if (formalizedDirection == dontLookInDirection) continue;
+
+
+                Figure figure = GetFigure(position + formalizedDirection);
+                if (figure == null) continue;
+
+                if (figure.Id == id) {
+                    return figure;
+                }
+            }
+
+            return null;
+        }
+
         public bool TryChooseFigure(Figure figure) {
             if (_selectedFigure == null) {
                 _selectedFigure = figure;
@@ -88,8 +131,6 @@ namespace TableLogic {
             Match match = FindStrongestMatch();
             if (match != null) {
                 while (match != null) {
-                    Debug.Log(this);
-                    Debug.Log(match);
                     await RemoveMatch(match);
                     match = FindStrongestMatch();
                 }
@@ -174,8 +215,8 @@ namespace TableLogic {
         private List<Match> FindAllMatches() {
             List<Match> matches = new List<Match>();
 
-            matches.AddRange(FindVerticalMatches());
-            matches.AddRange(FindHorizontalMatches());
+            matches.AddRange(FindVerticalMatches(targetCount: 3));
+            matches.AddRange(FindHorizontalMatches(targetCount: 3));
             matches.AddRange(DetectCrossMatches(matches));
 
             return matches;
@@ -196,7 +237,7 @@ namespace TableLogic {
             return crossMatches;
         }
 
-        private List<Match> FindVerticalMatches() {
+        private List<Match> FindHorizontalMatches(int targetCount) {
             List<Match> matches = new List<Match>();
             for (int y = 0; y < _size.y; y++) {
                 Match possibleMatch = new Match(GetFigure(new Vector2Int(0, y)));
@@ -204,16 +245,16 @@ namespace TableLogic {
                     Figure figure = GetFigure(new Vector2Int(x, y));
                     if (possibleMatch.TryToAdd(figure)) continue;
 
-                    if (possibleMatch.Count >= 3) matches.Add(possibleMatch);
+                    if (possibleMatch.Count >= targetCount) matches.Add(possibleMatch);
 
                     possibleMatch = new Match(figure);
                 }
-                if (possibleMatch.Count >= 3) matches.Add(possibleMatch);
+                if (possibleMatch.Count >= targetCount) matches.Add(possibleMatch);
             }
             return matches;
         }
 
-        private List<Match> FindHorizontalMatches() {
+        private List<Match> FindVerticalMatches(int targetCount) {
             List<Match> matches = new List<Match>();
             for (int x = 0; x < _size.x; x++) {
                 Match possibleMatch = new Match(GetFigure(new Vector2Int(x, 0)));
@@ -221,11 +262,11 @@ namespace TableLogic {
                     Figure figure = GetFigure(new Vector2Int(x, y));
                     if (possibleMatch.TryToAdd(figure)) continue;
 
-                    if (possibleMatch.Count >= 3) matches.Add(possibleMatch);
+                    if (possibleMatch.Count >= targetCount) matches.Add(possibleMatch);
 
                     possibleMatch = new Match(figure);
                 }
-                if (possibleMatch.Count >= 3) matches.Add(possibleMatch);
+                if (possibleMatch.Count >= targetCount) matches.Add(possibleMatch);
             }
             return matches;
         }
