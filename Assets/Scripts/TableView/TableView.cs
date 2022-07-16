@@ -21,7 +21,15 @@ namespace TableView {
         private bool CanHelp => (Time.time - _savedTableChangedTime) >= _helpDelay && !_isHelpingBlocking;
 
         private void Awake() {
-            TableScheme scheme = new FileParcer(Application.dataPath + _mapPath).GenerateScheme();
+            TableScheme scheme;
+            try {
+                scheme = new FileParcer(Application.dataPath + _mapPath).GenerateScheme();
+            }
+            catch (System.Exception ex) {
+                Debug.LogException(ex);
+                return;
+            }
+
             _table = new Table(this, new FigureFabric(), scheme);
             _table.Generate();
             _drawOffset = _table.Size / -2;
@@ -29,7 +37,7 @@ namespace TableView {
         }
 
         private void Update() {
-            HandleHelp();
+            if (_table != null) HandleHelp();
         }
 
         public Vector2 ToWorldPosition(Vector2Int position)

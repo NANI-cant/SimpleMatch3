@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using TableLogic;
 using UnityEngine;
 
@@ -23,6 +25,8 @@ namespace Infrastructure {
                 }
             }
 
+            if (!Validate(lines)) throw new System.Exception("Invalid table scheme file: " + _path);
+
             Vector2Int size = new Vector2Int(lines[0].Length, lines.Count);
             bool[,] map = new bool[size.y, size.x];
             for (int y = 0; y < size.y; y++) {
@@ -37,6 +41,22 @@ namespace Infrastructure {
             }
 
             return new TableScheme(map, size);
+        }
+
+        private bool Validate(List<string> lines) {
+            if (lines.Count == 0) return false;
+
+            int targetWidth = lines[0].Length;
+            if (targetWidth == 0) return false;
+            
+            foreach (var line in lines) {
+                if (line.Length != targetWidth) return false;
+
+                string testLine = line.Replace('#', ' ').Replace('@', ' ').Trim(' ');
+                if (testLine.Length > 0) return false;
+            }
+
+            return true;
         }
     }
 }
