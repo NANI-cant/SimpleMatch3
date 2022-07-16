@@ -45,6 +45,10 @@ namespace TableLogic {
         public void Enable() => _collider.enabled = true;
         public void Disable() => _collider.enabled = false;
 
+        private void OnDestroy() {
+            StopHelp();
+        }
+
         public async Task MoveToPosition() {
             Vector3 targetPosition = _table.ToWorldPosition(_figure.Position);
             float distance = Vector2.Distance(transform.position, targetPosition);
@@ -71,6 +75,9 @@ namespace TableLogic {
             }
             Destroy(gameObject);
         }
+
+        public void ShowHelp() => Mark();
+        public void StopHelp() => UnMark();
 
         private void Mark() => _cellRenderer.sprite = _markedSprite;
         private void UnMark() => _cellRenderer.sprite = _unMarkedSprite;

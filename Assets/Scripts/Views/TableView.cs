@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Abstraction;
@@ -8,10 +9,16 @@ namespace TableLogic {
     public class TableView : MonoBehaviour, ITableView {
         [SerializeField] private Vector2Int _size;
         [SerializeField] private FigureView _figureTemplate;
+        [SerializeField][Min(3)] private float _helpDelay;
 
         private Table _table;
-        private Vector2 _drawOffset;
         private Dictionary<Figure, FigureView> _figuresDictionary = new Dictionary<Figure, FigureView>();
+        private Vector2 _drawOffset;
+
+        Figure[] _helpFigures;
+        private float _savedTableChangedTime = 0;
+        private bool _isHelpingBlocking = false;
+        private bool CanHelp => (Time.time - _savedTableChangedTime) >= _helpDelay && !_isHelpingBlocking;
 
         private void Awake() {
             _table = new Table(this, new FigureFabric());
@@ -20,10 +27,16 @@ namespace TableLogic {
             DrawStartTable();
         }
 
+        private void Update() {
+            HandleHelp();
+        }
+
         public Vector2 ToWorldPosition(Vector2Int position)
             => transform.TransformPoint(_drawOffset) + new Vector3(position.x, position.y, 0);
 
         public async Task OnFiguresArrivedAsync(List<Figure> figures) {
+            _isHelpingBlocking = true;
+            HideHelp();
             DisableTableInput();
 
             Dictionary<int, int> xMinYRelation = new Dictionary<int, int>();
@@ -50,9 +63,14 @@ namespace TableLogic {
 
             await Task.WhenAll(movings);
             EnableTableInput();
+            _isHelpingBlocking = false;
+            _savedTableChangedTime = Time.time;
+            _helpFigures = _table.GetHelp();
         }
 
         public async Task OnFiguresReplacedAsync(List<Figure> figures) {
+            _isHelpingBlocking = true;
+            HideHelp();
             DisableTableInput();
 
             List<Task> movings = new List<Task>();
@@ -62,20 +80,23 @@ namespace TableLogic {
 
             await Task.WhenAll(movings);
             EnableTableInput();
+            _isHelpingBlocking = false;
         }
 
         public async Task OnFiguresDestroyedAsync(List<Figure> figures) {
+            _isHelpingBlocking = true;
+            HideHelp();
             DisableTableInput();
 
             List<Task> popings = new List<Task>();
             foreach (var figure in figures) {
-                Debug.Log(figure);
                 popings.Add(_figuresDictionary[figure].Pop());
                 _figuresDictionary.Remove(figure);
             }
 
             await Task.WhenAll(popings);
             EnableTableInput();
+            _isHelpingBlocking = false;
         }
 
         private void EnableTableInput() {
@@ -90,6 +111,22 @@ namespace TableLogic {
             }
         }
 
+        private void HandleHelp() {
+            if (CanHelp) {
+                foreach (var figure in _helpFigures) {
+                    _figuresDictionary[figure].ShowHelp();
+                }
+            }
+        }
+
+        private void HideHelp() {
+            foreach (var figure in _helpFigures) {
+                if (_figuresDictionary.ContainsKey(figure)) {
+                    _figuresDictionary[figure].StopHelp();
+                }
+            }
+        }
+
         private void DrawStartTable() {
             for (int y = 0; y < _table.Size.y; y++) {
                 for (int x = 0; x < _table.Size.x; x++) {
@@ -101,6 +138,7 @@ namespace TableLogic {
                     _figuresDictionary.Add(figure, figureView);
                 }
             }
+            _helpFigures = _table.GetHelp();
         }
     }
 }

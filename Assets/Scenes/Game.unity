@@ -252,6 +252,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _size: {x: 5, y: 9}
   _figureTemplate: {fileID: 7670690439725906816, guid: 05b24376b190c43408d08d00c46138d9, type: 3}
+  _helpDelay: 5
 --- !u!4 &1054380526
 Transform:
   m_ObjectHideFlags: 0
