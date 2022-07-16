@@ -13,6 +13,11 @@ namespace TableLogic {
         public IEnumerable<Vector2Int> Positions => _positions;
         public IEnumerable<Figure> Figures => _matchedFigures;
 
+        public Match() {
+            _matchedFigures = new List<Figure>();
+            _positions = new List<Vector2Int>();
+        }
+
         public Match(Figure firstFigure) {
             _matchedFigures = new List<Figure>();
             _positions = new List<Vector2Int>();
@@ -33,6 +38,14 @@ namespace TableLogic {
 
         public bool TryToAdd(Figure figure) {
             if (figure == null) return false;
+            
+            if (_matchedFigures.Count == 0) {
+                _targetId = figure.Id;
+                _matchedFigures.Add(figure);
+                _positions.Add(figure.Position);
+                return true;
+            }
+
             if (figure.Id != _targetId) return false;
             if (_matchedFigures.Contains(figure)) return true;
 

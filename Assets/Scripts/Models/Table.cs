@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,48 +6,56 @@ using UnityEngine;
 
 namespace TableLogic {
     public class Table {
-        private Figure[,] _table;
+        private TableMember[,] _table;
         private Vector2Int _size;
-        private Figure _selectedFigure;
         private ITableView _tableView;
         private IFigureFabric _figureFabric;
+        private TableScheme _scheme;
+        private Figure _selectedFigure;
 
         public Vector2Int Size => _size;
 
-        public Table(ITableView tableView, IFigureFabric figureFabric) {
+        public Table(ITableView tableView, IFigureFabric figureFabric, TableScheme scheme) {
+            _scheme = scheme;
             _tableView = tableView;
             _figureFabric = figureFabric;
         }
 
-        public void Generate(Vector2Int size) {
-            _size = new Vector2Int(Mathf.Abs(size.x), Mathf.Abs(size.y));
-
-            _table = new Figure[_size.y, _size.x];
-
-            for (int y = 0; y < _size.y; y++) {
-                for (int x = 0; x < _size.x; x++) {
-                    _table[y, x] = _figureFabric.GetFigure(this, new Vector2Int(x, y));
-                }
-            }
+        public void Generate() {
+            (_table, _size) = new TableGenerator(_figureFabric, this).GenerateByScheme(_scheme);
 
             RemoveMatches();
         }
 
-        public Figure GetFigure(Vector2Int position) {
-            Figure figure;
+        public TableMember GetMember(Vector2Int position) {
             try {
-                figure = _table[position.y, position.x];
+                TableMember member = _table[position.y, position.x];
+                return member;
             }
             catch (System.Exception) {
                 return null;
             }
-
-            return figure;
         }
 
-        private void SetFigure(Vector2Int position, Figure figure) {
-            _table[position.y, position.x] = figure;
-            figure?.SetPosition(position);
+        public Figure GetFigure(Vector2Int position) {
+            try {
+                TableMember member = _table[position.y, position.x];
+                if (member is Void) return null;
+                return (Figure)member;
+            }
+            catch (System.Exception) {
+                return null;
+            }
+        }
+
+        public void SetFigure(Vector2Int position, Figure figure) {
+            try {
+                _table[position.y, position.x] = figure;
+                figure?.SetPosition(position);
+            }
+            catch (System.Exception) {
+                return;
+            }
         }
 
         public Figure[] GetHelp() {
@@ -65,32 +72,13 @@ namespace TableLogic {
                     Figure edgeFigure = GetFigure(edgeFigurePosition);
                     if (edgeFigure == null) continue;
 
-                    Figure helpfulFigure = FindAroundById(edgeFigurePosition, match.TargetId, -directionToEdgeFigure);
+                    Figure helpfulFigure = edgeFigure.FindAroundById(edgeFigurePosition, match.TargetId, -directionToEdgeFigure);
                     if (helpfulFigure == null) continue;
 
                     return new Figure[] { edgeFigure, helpfulFigure };
                 }
             }
             return new Figure[0];
-        }
-
-        private Figure FindAroundById(Vector2Int position, string id, Vector2Int dontLookInDirection) {
-            for (int i = 0; i < 4; i++) {
-                Vector3 lookDirection = Matrix4x4.Rotate(Quaternion.Euler(0, 0, 90 * i)).MultiplyPoint3x4(Vector3.up);
-                Vector2Int formalizedDirection = new Vector2Int(Mathf.RoundToInt(lookDirection.x), Mathf.RoundToInt(lookDirection.y));
-
-                if (formalizedDirection == dontLookInDirection) continue;
-
-
-                Figure figure = GetFigure(position + formalizedDirection);
-                if (figure == null) continue;
-
-                if (figure.Id == id) {
-                    return figure;
-                }
-            }
-
-            return null;
         }
 
         public bool TryChooseFigure(Figure figure) {
@@ -152,15 +140,12 @@ namespace TableLogic {
         private async Task DropFiguresAbove(IEnumerable<Vector2Int> positions) {
             List<Figure> dropedFigures = new List<Figure>();
             foreach (var position in positions) {
-                if (GetFigure(position) != null) continue;
-                int figuresAbove = 0;
                 for (int y = position.y + 1; y < _size.y; y++) {
-                    Figure anotherFigure = GetFigure(new Vector2Int(position.x, y));
-                    if (anotherFigure != null) {
-                        SetFigure(anotherFigure.Position, null);
-                        SetFigure(new Vector2Int(position.x, position.y + figuresAbove), anotherFigure);
-                        figuresAbove++;
-                        dropedFigures.Add(anotherFigure);
+                    TableMember anotherMember = GetMember(new Vector2Int(position.x, y));
+                    if (anotherMember != null) {
+                        if (anotherMember.TryFallInPosition(position)) {
+                            dropedFigures.Add((Figure)anotherMember);
+                        }
                     }
                 }
             }
@@ -175,8 +160,8 @@ namespace TableLogic {
             for (int y = 0; y < _size.y; y++) {
                 for (int x = 0; x < _size.x; x++) {
                     Vector2Int position = new Vector2Int(x, y);
-                    Figure currentFigure = GetFigure(position);
-                    if (currentFigure != null) continue;
+                    TableMember currentMember = GetMember(position);
+                    if (currentMember != null) continue;
 
                     Figure newFigure = _figureFabric.GetFigure(this, position);
                     SetFigure(position, newFigure);
@@ -240,14 +225,14 @@ namespace TableLogic {
         private List<Match> FindHorizontalMatches(int targetCount) {
             List<Match> matches = new List<Match>();
             for (int y = 0; y < _size.y; y++) {
-                Match possibleMatch = new Match(GetFigure(new Vector2Int(0, y)));
+                Match possibleMatch = new Match();
                 for (int x = 0; x < _size.x; x++) {
                     Figure figure = GetFigure(new Vector2Int(x, y));
                     if (possibleMatch.TryToAdd(figure)) continue;
 
                     if (possibleMatch.Count >= targetCount) matches.Add(possibleMatch);
 
-                    possibleMatch = new Match(figure);
+                    possibleMatch = figure == null ? new Match() : new Match(figure);
                 }
                 if (possibleMatch.Count >= targetCount) matches.Add(possibleMatch);
             }
@@ -257,14 +242,14 @@ namespace TableLogic {
         private List<Match> FindVerticalMatches(int targetCount) {
             List<Match> matches = new List<Match>();
             for (int x = 0; x < _size.x; x++) {
-                Match possibleMatch = new Match(GetFigure(new Vector2Int(x, 0)));
+                Match possibleMatch = new Match();
                 for (int y = 0; y < _size.y; y++) {
                     Figure figure = GetFigure(new Vector2Int(x, y));
                     if (possibleMatch.TryToAdd(figure)) continue;
 
                     if (possibleMatch.Count >= targetCount) matches.Add(possibleMatch);
 
-                    possibleMatch = new Match(figure);
+                    possibleMatch = figure == null ? new Match() : new Match(figure);
                 }
                 if (possibleMatch.Count >= targetCount) matches.Add(possibleMatch);
             }
