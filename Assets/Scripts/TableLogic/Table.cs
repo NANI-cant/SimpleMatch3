@@ -29,7 +29,7 @@ namespace TableLogic {
             _figureFabric = figureFabric;
 
             _finder = new MatchFinder(this);
-            _helper = new Helper(this, _finder);
+            _helper = new Helper(this, figureFabric);
             _selector = new SelectingHandler(this);
         }
 

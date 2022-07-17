@@ -7,6 +7,8 @@ namespace Infrastructure {
     public class FigureFabric : IFigureFabric {
         private Dataset _dataset;
 
+        public string[] AllIds => _dataset.Ids;
+
         public FigureFabric() {
             _dataset = Resources.FindObjectsOfTypeAll<Dataset>()[0];
         }
