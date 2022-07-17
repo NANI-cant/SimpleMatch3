@@ -48,7 +48,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _movingSpeed: 6
-  _popSpeed: 3
+  _popSpeed: 10
+  _helpTweeningReloadTime: 3
   _markedSprite: {fileID: 21300000, guid: e043648edaf9a88499ab5f319a218915, type: 3}
   _unMarkedSprite: {fileID: 21300000, guid: 7de52d7fb2669fc4ab017d2d9ada5d3e, type: 3}
   _cellRenderer: {fileID: 4087649928842239661}
@@ -101,7 +102,7 @@ SpriteRenderer:
   m_Size: {x: 0.85333335, y: 0.85333335}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!61 &4013460567100913706
@@ -211,6 +212,6 @@ SpriteRenderer:
   m_Size: {x: 1.05, y: 1.05}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0

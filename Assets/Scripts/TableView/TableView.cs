@@ -6,6 +6,7 @@ using TableLogic;
 using UnityEngine;
 
 namespace TableView {
+    [RequireComponent(typeof(TableAudio))]
     public class TableView : MonoBehaviour, ITableView {
         [SerializeField] private FigureView _figureTemplate;
         [SerializeField][Min(3)] private float _helpDelay;
@@ -14,11 +15,12 @@ namespace TableView {
         private Table _table;
         private Dictionary<Figure, FigureView> _figuresDictionary = new Dictionary<Figure, FigureView>();
         private Vector2 _drawOffset;
+        private TableAudio _audio;
 
-        Figure[] _helpFigures;
+        private Figure[] _helpFigures;
         private float _savedTableChangedTime = 0;
-        private bool _isHelpingBlocking = false;
-        private bool CanHelp => (Time.time - _savedTableChangedTime) >= _helpDelay && !_isHelpingBlocking;
+        private bool _isHelpingBlocked = false;
+        private bool CanHelp => (Time.time - _savedTableChangedTime) >= _helpDelay && !_isHelpingBlocked;
 
         private void Awake() {
             TableScheme scheme;
@@ -30,21 +32,24 @@ namespace TableView {
                 return;
             }
 
+            _audio = GetComponent<TableAudio>();
+
             _table = new Table(this, new FigureFabric(), scheme);
             _table.Generate();
             _drawOffset = _table.Size / -2;
+
             DrawStartTable();
         }
 
-        private void Update() {
-            if (_table != null) HandleHelp();
+        private async Task Update() {
+            if (_table != null) await HandleHelp();
         }
 
         public Vector2 ToWorldPosition(Vector2Int position)
             => transform.TransformPoint(_drawOffset) + new Vector3(position.x, position.y, 0);
 
         public async Task OnFiguresArrivedAsync(List<Figure> figures) {
-            _isHelpingBlocking = true;
+            _isHelpingBlocked = true;
             HideHelp();
             DisableTableInput();
 
@@ -72,13 +77,13 @@ namespace TableView {
 
             await Task.WhenAll(movings);
             EnableTableInput();
-            _isHelpingBlocking = false;
+            _isHelpingBlocked = false;
             _savedTableChangedTime = Time.time;
             _helpFigures = _table.Helper.GetHelp();
         }
 
         public async Task OnFiguresReplacedAsync(List<Figure> figures) {
-            _isHelpingBlocking = true;
+            _isHelpingBlocked = true;
             HideHelp();
             DisableTableInput();
 
@@ -86,14 +91,13 @@ namespace TableView {
             foreach (var figure in figures) {
                 movings.Add(_figuresDictionary[figure].MoveToPosition());
             }
-
             await Task.WhenAll(movings);
             EnableTableInput();
-            _isHelpingBlocking = false;
+            _isHelpingBlocked = false;
         }
 
         public async Task OnFiguresDestroyedAsync(List<Figure> figures) {
-            _isHelpingBlocking = true;
+            _isHelpingBlocked = true;
             HideHelp();
             DisableTableInput();
 
@@ -104,8 +108,9 @@ namespace TableView {
             }
 
             await Task.WhenAll(popings);
+            _audio.PlayPop();
             EnableTableInput();
-            _isHelpingBlocking = false;
+            _isHelpingBlocked = false;
         }
 
         private void EnableTableInput() {
@@ -120,11 +125,15 @@ namespace TableView {
             }
         }
 
-        private void HandleHelp() {
+        private async Task HandleHelp() {
             if (CanHelp) {
-                foreach (var figure in _helpFigures) {
-                    _figuresDictionary[figure].ShowHelp();
+                List<Task> tweenings = new List<Task>();
+                for (int i = 0; i < _helpFigures.Length; i++) {
+                    Figure thisFigure = _helpFigures[i];
+                    Figure nextFigure = _helpFigures[(i + 1) % _helpFigures.Length];
+                    tweenings.Add(_figuresDictionary[thisFigure].TweenHelp(ToWorldPosition(nextFigure.Position)));
                 }
+                await Task.WhenAll(tweenings);
             }
         }
 
