@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Abstraction;
 using UnityEngine;
 
@@ -5,7 +6,7 @@ namespace TableLogic {
     public class Void : TableMember {
         public override bool isMovable => false;
 
-        public override Figure FindAroundById(Vector2Int position, string id, Vector2Int dontLookInDirection) {
+        public override Figure FindAroundById(string id, List<Vector2Int> dontLookInDirections) {
             return null;
         }
 

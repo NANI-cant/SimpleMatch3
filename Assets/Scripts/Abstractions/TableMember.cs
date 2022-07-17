@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TableLogic;
 using UnityEngine;
 
@@ -5,7 +6,7 @@ namespace Abstraction {
     public abstract class TableMember {
         public abstract bool isMovable { get; }
 
-        public abstract Figure FindAroundById(Vector2Int position, string id, Vector2Int dontLookInDirection);
+        public abstract Figure FindAroundById(string id, List<Vector2Int> dontLookInDirections);
         public abstract bool TryFallInPosition(Vector2Int position);
     }
 }

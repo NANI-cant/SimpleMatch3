@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Abstraction;
 using UnityEngine;
 
@@ -51,14 +52,14 @@ namespace TableLogic {
             _position = position;
         }
 
-        public override Figure FindAroundById(Vector2Int position, string id, Vector2Int dontLookInDirection) {
+        public override Figure FindAroundById(string id, List<Vector2Int> dontLookInDirections) {
             for (int i = 0; i < 4; i++) {
                 Vector3 lookDirection = Matrix4x4.Rotate(Quaternion.Euler(0, 0, 90 * i)).MultiplyPoint3x4(Vector3.up);
                 Vector2Int formalizedDirection = new Vector2Int(Mathf.RoundToInt(lookDirection.x), Mathf.RoundToInt(lookDirection.y));
 
-                if (formalizedDirection == dontLookInDirection) continue;
+                if (dontLookInDirections.Contains(formalizedDirection)) continue;
 
-                Figure figure = _table.GetFigure(position + formalizedDirection);
+                Figure figure = _table.GetFigure(Position + formalizedDirection);
                 if (figure == null) continue;
 
                 if (figure.Id == id) {
