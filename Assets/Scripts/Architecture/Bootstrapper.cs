@@ -6,13 +6,13 @@ using UnityEngine;
 
 namespace Architecture {
     public class Bootstrapper : MonoBehaviour {
-        [SerializeField] private string _mapPath;
+        [SerializeField] private string _mapName;
         [SerializeField] private TableView.TableView _tableView;
         [SerializeField][Min(0)] private int _scoreForFigure;
 
         private static Dictionary<Type, object> _container;
 
-        public string MapPath => _mapPath;
+        public string MapName => _mapName;
         public TableView.TableView TableView => _tableView;
         public int ScoreForFigure => _scoreForFigure;
 
@@ -32,7 +32,7 @@ namespace Architecture {
 
             TableScheme scheme;
             try {
-                scheme = new FileParcer(Application.dataPath + instance.MapPath).GenerateScheme();
+                scheme = new TableSchemeParcer().GenerateScheme(new AssetAccess().GetTableScheme(instance.MapName).text);
             }
             catch (System.Exception ex) {
                 Debug.LogException(ex);
