@@ -8,6 +8,8 @@ using UnityEngine;
 namespace TableLogic {
     public class Table {
         public event Action<Match> MatchRemoved;
+        public event Action NoMoreMatches;
+        public event Action Generated;
 
         private IFigureFabric _figureFabric;
         private ITableView _tableView;
@@ -36,6 +38,7 @@ namespace TableLogic {
         public void Generate() {
             (_table, _size) = new TableGenerator(_figureFabric, this).GenerateByScheme(_scheme);
             RemoveMatches();
+            Generated?.Invoke();
         }
 
         public TableMember GetMember(Vector2Int position) {
@@ -86,6 +89,8 @@ namespace TableLogic {
                     await RemoveMatch(match);
                     match = _finder.FindStrongestMatch(3);
                 }
+                
+                if (_helper.GetHelp().Length == 0) NoMoreMatches?.Invoke();
             }
             else {
                 Change(firstFigure, secondFigure, false);
