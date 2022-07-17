@@ -10,6 +10,7 @@ namespace TableView {
         [SerializeField][Min(0)] private float _movingSpeed = 6f;
         [SerializeField][Min(0)] private float _popSpeed = 0.5f;
         [SerializeField][Min(0)] private float _helpTweeningReloadTime = 2f;
+        [SerializeField][Min(0)] private float _timeForShowing = 2f;
 
         [SerializeField] private Sprite _markedSprite;
         [SerializeField] private Sprite _unMarkedSprite;
@@ -31,6 +32,23 @@ namespace TableView {
         private void Awake() {
             _figureRenderer = GetComponent<SpriteRenderer>();
             _collider = GetComponent<Collider2D>();
+        }
+
+        private async void Start() {
+            await Show();
+        }
+
+        private async Task Show() {
+            SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+            float alpha = 0;
+            while (alpha < 1) {
+                foreach (var renderer in renderers) {
+                    renderer.color = new Color(1, 1, 1, alpha);
+                }
+                await Task.Yield();
+                alpha += 1 / _timeForShowing * Time.deltaTime;
+            }
         }
 
         public void Construct(Figure figure, TableView table) {

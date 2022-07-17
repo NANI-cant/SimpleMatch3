@@ -50,6 +50,7 @@ MonoBehaviour:
   _movingSpeed: 6
   _popSpeed: 10
   _helpTweeningReloadTime: 3
+  _timeForShowing: 0.5
   _markedSprite: {fileID: 21300000, guid: e043648edaf9a88499ab5f319a218915, type: 3}
   _unMarkedSprite: {fileID: 21300000, guid: 7de52d7fb2669fc4ab017d2d9ada5d3e, type: 3}
   _cellRenderer: {fileID: 4087649928842239661}
