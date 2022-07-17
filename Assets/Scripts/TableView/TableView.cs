@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Abstraction;
-using Infrastructure;
+using Architecture;
 using TableLogic;
 using UnityEngine;
 
@@ -10,7 +10,6 @@ namespace TableView {
     public class TableView : MonoBehaviour, ITableView {
         [SerializeField] private FigureView _figureTemplate;
         [SerializeField][Min(3)] private float _helpDelay;
-        [SerializeField] private string _mapPath;
 
         private Table _table;
         private Dictionary<Figure, FigureView> _figuresDictionary = new Dictionary<Figure, FigureView>();
@@ -23,18 +22,13 @@ namespace TableView {
         private bool CanHelp => (Time.time - _savedTableChangedTime) >= _helpDelay && !_isHelpingBlocked;
 
         private void Awake() {
-            TableScheme scheme;
-            try {
-                scheme = new FileParcer(Application.dataPath + _mapPath).GenerateScheme();
-            }
-            catch (System.Exception ex) {
-                Debug.LogException(ex);
-                return;
-            }
 
             _audio = GetComponent<TableAudio>();
 
-            _table = new Table(this, new FigureFabric(), scheme);
+            if (!Bootstrapper.TryGetInstance<Table>(out _table)) {
+                Debug.LogException(new System.Exception("Table is null"));
+                return;
+            }
             _table.Generate();
             _drawOffset = _table.Size / -2;
 

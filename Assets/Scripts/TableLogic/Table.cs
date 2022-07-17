@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,6 +7,8 @@ using UnityEngine;
 
 namespace TableLogic {
     public class Table {
+        public event Action<Match> MatchRemoved;
+
         private IFigureFabric _figureFabric;
         private ITableView _tableView;
         private MatchFinder _finder;
@@ -94,6 +97,7 @@ namespace TableLogic {
                 SetFigure(figure.Position, null);
             }
             await _tableView.OnFiguresDestroyedAsync(new List<Figure>(match.Figures));
+            MatchRemoved?.Invoke(match);
 
             await DropFiguresAbove(match.Positions);
         }
