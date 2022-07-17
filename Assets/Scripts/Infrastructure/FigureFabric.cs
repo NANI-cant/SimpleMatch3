@@ -10,7 +10,7 @@ namespace Infrastructure {
         public string[] AllIds => _dataset.Ids;
 
         public FigureFabric() {
-            _dataset = Resources.FindObjectsOfTypeAll<Dataset>()[0];
+            _dataset = new AssetAccess().GetDataset();
         }
 
         public Void GetVoid() {
