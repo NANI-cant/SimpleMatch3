@@ -22,17 +22,23 @@ namespace TableView {
         private bool CanHelp => (Time.time - _savedTableChangedTime) >= _helpDelay && !_isHelpingBlocked;
 
         private void Awake() {
-
             _audio = GetComponent<TableAudio>();
 
             if (!Bootstrapper.TryGetInstance<Table>(out _table)) {
                 Debug.LogException(new System.Exception("Table is null"));
                 return;
             }
-            _table.Generate();
-            _drawOffset = _table.Size / -2;
 
+            _table.Generate();
             DrawStartTable();
+        }
+
+        private void OnEnable() {
+            _table.Generated += OnTableGenerated;
+        }
+
+        private void OnDisable() {
+            _table.Generated -= OnTableGenerated;
         }
 
         private async Task Update() {
@@ -119,6 +125,15 @@ namespace TableView {
             }
         }
 
+        private void OnTableGenerated() {
+            foreach (var pair in _figuresDictionary) {
+                Destroy(pair.Value.gameObject);
+            }
+            _figuresDictionary.Clear();
+
+            DrawStartTable();
+        }
+
         private async Task HandleHelp() {
             if (CanHelp) {
                 List<Task> tweenings = new List<Task>();
@@ -140,6 +155,7 @@ namespace TableView {
         }
 
         private void DrawStartTable() {
+            _drawOffset = _table.Size / -2;
             for (int y = 0; y < _table.Size.y; y++) {
                 for (int x = 0; x < _table.Size.x; x++) {
                     Figure figure = _table.GetFigure(new Vector2Int(x, y));
