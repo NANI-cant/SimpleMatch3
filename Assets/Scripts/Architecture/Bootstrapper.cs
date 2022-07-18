@@ -27,6 +27,8 @@ namespace Architecture {
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Bootstrap() {
+            Application.targetFrameRate = 300;
+
             _container = new Dictionary<Type, object>();
             var instance = FindObjectOfType<Bootstrapper>();
 

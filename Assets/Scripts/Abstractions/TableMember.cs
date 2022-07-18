@@ -4,8 +4,6 @@ using UnityEngine;
 
 namespace Abstraction {
     public abstract class TableMember {
-        public abstract bool isMovable { get; }
-
         public abstract Figure FindAroundById(string id, List<Vector2Int> dontLookInDirections);
         public abstract bool TryFallInPosition(Vector2Int position);
     }

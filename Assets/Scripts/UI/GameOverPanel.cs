@@ -1,4 +1,3 @@
-using System;
 using Architecture;
 using TableLogic;
 using UnityEngine;
@@ -40,10 +39,6 @@ namespace UI {
             Hide();
         }
 
-        private void OnNoMoreMatches() {
-            Show();
-        }
-
         private void Show() {
             _canvasGroup.alpha = 1;
             _canvasGroup.interactable = true;
@@ -55,5 +50,7 @@ namespace UI {
             _canvasGroup.interactable = false;
             _canvasGroup.blocksRaycasts = false;
         }
+
+        private void OnNoMoreMatches() => Show();
     }
 }

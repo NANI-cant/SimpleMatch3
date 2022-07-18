@@ -7,9 +7,9 @@ namespace TableLogic {
         private Table _table;
         private IFigureFabric _fabric;
 
-        public Helper(Table table, IFigureFabric fabric) {
+        public Helper(Table table, IFigureFabric figureFabric) {
             _table = table;
-            _fabric = fabric;
+            _fabric = figureFabric;
         }
 
         public Figure[] GetHelp() {

@@ -13,12 +13,7 @@ namespace Infrastructure {
             _dataset = new AssetAccess().GetDataset();
         }
 
-        public Void GetVoid() {
-            return new Void();
-        }
-
-        public Figure GetFigure(Table table, Vector2Int position) {
-            return new Figure(table, position, _dataset.GetRandom());
-        }
+        public Void GetVoid() => new Void();
+        public Figure GetFigure(Table table, Vector2Int position) => new Figure(table, position, _dataset.GetRandom());
     }
 }
