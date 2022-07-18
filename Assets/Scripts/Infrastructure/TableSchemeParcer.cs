@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using TableLogic;
 using UnityEngine;
 
@@ -34,7 +33,7 @@ namespace Infrastructure {
             foreach (var line in lines) {
                 if (line.Length != targetWidth) return false;
 
-                string testLine = line.Replace('#', ' ').Replace('@', ' ').Trim(' ');
+                string testLine = line.Replace(EMPTY, ' ').Replace(CELL, ' ').Trim(' ');
                 if (testLine.Length > 0) return false;
             }
 

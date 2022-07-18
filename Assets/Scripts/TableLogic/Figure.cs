@@ -9,15 +9,13 @@ namespace TableLogic {
         public event Action UnChoosed;
 
         private Table _table;
+        private IFigureData _data;
         private Vector2Int _position;
         private bool _isChoosen;
-        private IFigureData _data;
 
         public string Id => _data.Id;
         public IFigureData Data => _data;
         public Vector2Int Position => _position;
-
-        public override bool isMovable => true;
 
         public Figure(Table table, Vector2Int position, IFigureData figureData) {
             _data = figureData;
@@ -62,9 +60,7 @@ namespace TableLogic {
                 Figure figure = _table.GetFigure(Position + formalizedDirection);
                 if (figure == null) continue;
 
-                if (figure.Id == id) {
-                    return figure;
-                }
+                if (figure.Id == id) return figure;
             }
 
             return null;
