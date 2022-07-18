@@ -14,6 +14,12 @@ namespace TableLogic {
             _score = 0;
 
             table.MatchRemoved += OnMatchRemoved;
+            table.Generated += Clear;
+        }
+
+        private void Clear() {
+            _score = 0;
+            Changed?.Invoke(_score);
         }
 
         private void OnMatchRemoved(Match match) {
