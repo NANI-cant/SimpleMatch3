@@ -1,6 +1,6 @@
 # SimpleMatch3
 
-![SimpleMatch3](https://user-images.githubusercontent.com/57311180/179741232-22d58658-28ad-4054-981a-e59792c01641.gif)
+![SimpleMatch3](https://user-images.githubusercontent.com/57311180/179741876-bf04e730-7587-4fae-8725-b2014d4358f2.gif)
 
 Простая match 3 игра
 
