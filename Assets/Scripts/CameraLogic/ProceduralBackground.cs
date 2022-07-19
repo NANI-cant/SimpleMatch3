@@ -7,7 +7,7 @@ namespace CameraLogic {
         [SerializeField] private Gradient _gradient;
         [SerializeField] private float timeForCycle = 60f;
 
-        [SerializeField][Range(0, 1)] private float _progress = 0f;
+        private float _progress = 0f;
         private Camera _camera;
 
         private void Awake() {
@@ -19,7 +19,7 @@ namespace CameraLogic {
             if (Application.isPlaying) _progress += Time.deltaTime * 1 / timeForCycle;
             if (_progress > 1) _progress = 0;
 
-            Camera.main.backgroundColor = _gradient.Evaluate(_progress);
+            _camera.backgroundColor = _gradient.Evaluate(_progress);
         }
     }
 }
