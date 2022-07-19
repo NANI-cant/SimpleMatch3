@@ -1,4 +1,7 @@
 # SimpleMatch3
+
+![SimpleMatch3](https://user-images.githubusercontent.com/57311180/179741232-22d58658-28ad-4054-981a-e59792c01641.gif)
+
 Простая match 3 игра
 
 Разработана без испольования стороних ассетов и фреймворков.
