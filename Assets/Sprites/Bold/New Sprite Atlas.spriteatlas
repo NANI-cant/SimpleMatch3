@@ -39,17 +39,21 @@ SpriteAtlas:
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
   - {fileID: 21300000, guid: 59fa39226b4107040bce35879335d8e9, type: 3}
+  - {fileID: 21300000, guid: 66437f659f935b84f828c4a5c8480b19, type: 3}
   - {fileID: 21300000, guid: 300222c91430f4a488007e623cf45da5, type: 3}
   - {fileID: 21300000, guid: 3b1bde4a53065dc41918104747fc92a1, type: 3}
   - {fileID: 21300000, guid: ff62546bde5e1dc4eb01b2cedb84f6fb, type: 3}
+  - {fileID: 21300000, guid: e847e4dc9a16c8e4ebdaaab2812c3f2a, type: 3}
   - {fileID: 21300000, guid: 898607dc805e9c84e9af803f8d88f3c6, type: 3}
   - {fileID: 21300000, guid: e043648edaf9a88499ab5f319a218915, type: 3}
   - {fileID: 21300000, guid: 7de52d7fb2669fc4ab017d2d9ada5d3e, type: 3}
   m_PackedSpriteNamesToIndex:
   - SquareBold
+  - Group 47
   - DiamondBold
   - TriangleBold
   - CrossBold
+  - Rectangle 38
   - CircleBold
   - MarkedBold
   - UnMarkedBold

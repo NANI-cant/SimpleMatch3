@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Keys xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Key Name="Restart">
+		<Translates>
+			<ru>Заново</ru>
+			<en-us>Restart</en-us>
+		</Translates>
+	</Key>
+	<Key Name="GameOver">
+		<Translates>
+			<ru>Конец игры</ru>
+			<en-us>Game over</en-us>
+		</Translates>
+	</Key>
+	<Key Name="NoMoreMatches">
+		<Translates>
+			<ru>больше нет совпадений</ru>
+			<en-us>no more matches</en-us>
+		</Translates>
+	</Key>
+	<Key Name="Language">
+		<Translates>
+			<ru>Язык</ru>
+			<en-us>Language</en-us>
+		</Translates>
+	</Key>
+	<Key Name="Settings">
+		<Translates>
+			<ru>Настройки</ru>
+			<en-us>Settings</en-us>
+		</Translates>
+	</Key>
+</Keys>
