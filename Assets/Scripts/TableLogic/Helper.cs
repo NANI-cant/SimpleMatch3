@@ -1,11 +1,12 @@
+using System;
 using System.Collections.Generic;
 using Abstraction;
 using UnityEngine;
 
 namespace TableLogic {
     public class Helper {
-        private Table _table;
-        private IFigureFabric _fabric;
+        private readonly Table _table;
+        private readonly IFigureFabric _fabric;
 
         public Helper(Table table, IFigureFabric figureFabric) {
             _table = table;
@@ -19,7 +20,7 @@ namespace TableLogic {
 
                 return helpFigures;
             }
-            return new Figure[0];
+            return Array.Empty<Figure>();
         }
 
         private Dictionary<string, List<Figure>> GetFiguresByIds() {
@@ -41,7 +42,7 @@ namespace TableLogic {
         }
 
         private Figure[] FindHelpInFigures(List<Figure> figures) {
-            for (int i = 0; i < figures.Count; i++) {
+            for (int i = 0; i < figures.Count-1; i++) {
                 for (int j = i + 1; j < figures.Count; j++) {
                     float distance = Vector2Int.Distance(figures[i].Position, figures[j].Position);
 
@@ -52,8 +53,9 @@ namespace TableLogic {
                         if (middleFigure == null) continue;
 
                         var dontLookDirection = figures[i].Position - middleFigure.Position;
-                        Figure helpFigure = middleFigure.FindAroundById(figures[i].Id, new List<Vector2Int>(new Vector2Int[] { dontLookDirection, -dontLookDirection }));
+                        Figure helpFigure = middleFigure.FindAroundById(figures[i].Id, new List<Vector2Int>(new[] { dontLookDirection, -dontLookDirection }));
                         if (helpFigure == null) continue;
+                        if(Vector2.Distance(helpFigure.Position, middleFigure.Position)>1) continue;
 
                         return new Figure[] { middleFigure, helpFigure };
                     }
@@ -64,8 +66,8 @@ namespace TableLogic {
 
                         Figure edgeFigure = _table.GetFigure(edgeFigurePosition);
                         if (edgeFigure != null) {
-                            Figure helpfulFigure = edgeFigure.FindAroundById(figures[i].Id, new List<Vector2Int>(new Vector2Int[] { -directionToEdgeFigure }));
-                            if (helpfulFigure != null) {
+                            Figure helpfulFigure = edgeFigure.FindAroundById(figures[i].Id, new List<Vector2Int>(new[] { -directionToEdgeFigure }));
+                            if (helpfulFigure != null && Vector2.Distance(helpfulFigure.Position, edgeFigure.Position)<=1) {
                                 return new Figure[] { edgeFigure, helpfulFigure };
                             }
                         }
@@ -76,7 +78,7 @@ namespace TableLogic {
                         edgeFigure = _table.GetFigure(edgeFigurePosition);
                         if (edgeFigure != null) {
                             Figure helpfulFigure = edgeFigure.FindAroundById(figures[i].Id, new List<Vector2Int>(new Vector2Int[] { -directionToEdgeFigure }));
-                            if (helpfulFigure != null) {
+                            if (helpfulFigure != null && Vector2.Distance(helpfulFigure.Position, edgeFigure.Position)<=1) {
                                 return new Figure[] { edgeFigure, helpfulFigure };
                             }
                         }

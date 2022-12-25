@@ -51,8 +51,8 @@ namespace TableLogic {
         }
 
         public override Figure FindAroundById(string id, List<Vector2Int> dontLookInDirections) {
-            for (int i = 0; i < 4; i++) {
-                Vector3 lookDirection = Matrix4x4.Rotate(Quaternion.Euler(0, 0, 90 * i)).MultiplyPoint3x4(Vector3.up);
+            for (int i = 0; i < 4; i++){
+                Vector3 lookDirection = Quaternion.Euler(0, 0, 90 * i) * Vector3.up;
                 Vector2Int formalizedDirection = new Vector2Int(Mathf.RoundToInt(lookDirection.x), Mathf.RoundToInt(lookDirection.y));
 
                 if (dontLookInDirections.Contains(formalizedDirection)) continue;
