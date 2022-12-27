@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Infrastructure;
+using PersistentProgress;
 using TableLogic;
 using UnityEngine;
 
@@ -13,10 +14,10 @@ namespace Architecture {
 
         private static Dictionary<Type, object> _container;
 
-        public string MapName => _mapName;
-        public TableView.TableView TableView => _tableView;
-        public int ScoreForFigure => _scoreForFigure;
-        public TextAsset LocalizationTextAsset => _localizationTextAsset;
+        private string MapName => _mapName;
+        private TableView.TableView TableView => _tableView;
+        private int ScoreForFigure => _scoreForFigure;
+        private TextAsset LocalizationTextAsset => _localizationTextAsset;
 
         public static bool TryGetInstance<T>(out T instance) {
             if (_container.ContainsKey(typeof(T))) {
@@ -43,13 +44,15 @@ namespace Architecture {
             }
 
             Table table = new Table(instance.TableView, new FigureFabric(), scheme);
-            Score score = new Score(instance.ScoreForFigure, table);
+            PersistentProgressService persistentProgressService = new PersistentProgressService();
+            Score score = new Score(instance.ScoreForFigure, table, persistentProgressService);
             Localization localization = new Localization(instance.LocalizationTextAsset);
 
             _container[typeof(Table)] = table;
             _container[typeof(Score)] = score;
             _container[typeof(Localization)] = localization;
             _container[typeof(AdService)] = new AdService();
+            _container[typeof(PersistentProgressService)] = persistentProgressService;
         }
     }
 }

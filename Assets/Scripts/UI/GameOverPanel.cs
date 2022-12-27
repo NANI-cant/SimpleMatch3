@@ -1,4 +1,5 @@
 using Architecture;
+using PersistentProgress;
 using TableLogic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +13,7 @@ namespace UI {
         private Table _table;
 
         private void Awake() {
-            if (!Bootstrapper.TryGetInstance<Table>(out _table)) {
+            if (!Bootstrapper.TryGetInstance(out _table)) {
                 Debug.LogException(new System.Exception("Table is null"));
                 return;
             }
